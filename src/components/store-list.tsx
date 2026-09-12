@@ -16,10 +16,12 @@ import {
   CheckCircle2,
   Trash2,
   X,
+  Users,
 } from "lucide-react";
 import type { StoreWithCounts, Profile } from "@/lib/types";
 import { CreateStoreDialog } from "./create-store-dialog";
 import { DeleteStoreDialog } from "./delete-store-dialog";
+import { AdminUserModal } from "./admin-user-modal";
 import { signOut } from "@/app/actions/auth-actions";
 
 interface StoreListProps {
@@ -29,6 +31,7 @@ interface StoreListProps {
 
 export function StoreList({ stores, profile }: StoreListProps) {
   const [showCreate, setShowCreate] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StoreWithCounts | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -93,13 +96,26 @@ export function StoreList({ stores, profile }: StoreListProps) {
             </div>
           </div>
 
-          <button
-            onClick={() => signOut()}
-            className="p-2 rounded-xl text-white/40 hover:text-white/80 hover:bg-white/10 transition-all active:scale-95 border border-transparent hover:border-white/10"
-            title="Đăng xuất"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => setShowUserModal(true)}
+                className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition-all active:scale-95 shadow-sm"
+                title="Quản lý thành viên & phân quyền"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Quản lý User</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => signOut()}
+              className="p-2 rounded-xl text-white/40 hover:text-white/80 hover:bg-white/10 transition-all active:scale-95 border border-transparent hover:border-white/10"
+              title="Đăng xuất"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -244,6 +260,12 @@ export function StoreList({ stores, profile }: StoreListProps) {
         <DeleteStoreDialog
           store={deleteTarget}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+      {showUserModal && (
+        <AdminUserModal
+          onClose={() => setShowUserModal(false)}
+          currentUserId={profile?.id}
         />
       )}
     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, ShieldCheck, Search, X, LayoutGrid, List } from "lucide-react";
+import { ArrowLeft, Camera, ShieldCheck, Search, X, LayoutGrid, List, Download } from "lucide-react";
 import Link from "next/link";
 import type { Store, OrderItem, OrderStatus, Profile } from "@/lib/types";
 import { StatusFilter } from "./status-filter";
@@ -137,31 +137,77 @@ export function StoreDetail({
     []
   );
 
+  const exportStoreOrdersCSV = useCallback(() => {
+    if (!items || items.length === 0) return;
+
+    const statusLabels: Record<string, string> = {
+      PURCHASED: "Đã mua xong",
+      PARTIALLY_PURCHASED: "Chưa mua xong",
+      PENDING_ORDER: "Chờ gom order",
+      DELIVERED: "Đã giao hàng",
+      IN_STOCK: "Tồn kho",
+      OUT_OF_STOCK: "Hết hàng",
+    };
+
+    const headers = ["Mã đơn", "Tên khách", "Size", "Màu sắc", "Trạng thái", "Ghi chú", "Ngày tạo"];
+    const rows = items.map((item) => [
+      `"${(item.order_code || "").replace(/"/g, '""')}"`,
+      `"${(item.customer_name || "").replace(/"/g, '""')}"`,
+      `"${(item.size || "").replace(/"/g, '""')}"`,
+      `"${(item.color || "").replace(/"/g, '""')}"`,
+      `"${statusLabels[item.status] || item.status}"`,
+      `"${(item.note || "").replace(/"/g, '""')}"`,
+      `"${new Date(item.created_at).toLocaleString("vi-VN")}"`,
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `DonHang_${store.name}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [items, store.name]);
+
   return (
     <div className="min-h-dvh bg-surface">
       {/* Header */}
       <header className="sticky top-0 z-30 glass border-b border-border-subtle shadow-md">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Link
-            href="/stores"
-            className="p-1.5 -ml-1.5 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all active:scale-95"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-white truncate">
-              {store.name}
-            </h1>
-            <p className="text-[10px] text-white/40 flex items-center gap-1.5">
-              <span>Hiển thị {filteredItems.length} / {items.length} ảnh đơn</span>
-              {isAdmin && (
-                <span className="inline-flex items-center gap-0.5 text-amber-400 font-semibold bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20">
-                  <ShieldCheck className="w-3 h-3" />
-                  Admin
-                </span>
-              )}
-            </p>
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Link
+              href="/stores"
+              className="p-1.5 -ml-1.5 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all active:scale-95 flex-shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold text-white truncate">
+                {store.name}
+              </h1>
+              <p className="text-[10px] text-white/40 flex items-center gap-1.5">
+                <span>Hiển thị {filteredItems.length} / {items.length} ảnh đơn</span>
+                {isAdmin && (
+                  <span className="inline-flex items-center gap-0.5 text-amber-400 font-semibold bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20">
+                    <ShieldCheck className="w-3 h-3" />
+                    Admin
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
+
+          <button
+            onClick={exportStoreOrdersCSV}
+            className="p-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 hover:text-white transition-all active:scale-95 border border-indigo-500/30 flex items-center gap-1.5 text-xs font-semibold flex-shrink-0"
+            title="Xuất danh sách đơn hàng ra CSV"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Xuất CSV</span>
+          </button>
         </div>
 
         {/* Instant Search Bar & View Mode Toggle */}
