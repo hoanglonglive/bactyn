@@ -171,8 +171,8 @@ export function PhotoDetailModal({
       } else if (deltaX > 0 && hasPrev) {
         handlePrev(); // Swipe Right -> Prev Photo
       }
-    } else if (absY > absX * 1.5 && absY > minVerticalSwipe) {
-      // Deliberate vertical swipe (Up or Down) -> Close modal back to store list
+    } else if (deltaY < -minVerticalSwipe && absY > absX * 1.5) {
+      // Swipe UP (from bottom to top) -> Close modal back to store list
       onClose();
     }
 
