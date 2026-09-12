@@ -15,17 +15,23 @@ export default async function StoreDetailPage({
 }) {
   const { id } = await params;
 
-  const [storeResult, itemsResult, profileResult, allStores] =
-    await Promise.all([
-      getStore(id),
-      getStoreItems(id),
-      getUserProfile(),
-      getAllStoresSimple(),
-    ]);
+  // Concurrently fetch primary store data & user profile
+  const [storeResult, itemsResult, profileResult] = await Promise.all([
+    getStore(id),
+    getStoreItems(id),
+    getUserProfile(),
+  ]);
 
   if (storeResult.error || !storeResult.data) {
     notFound();
   }
+
+  const profile = profileResult.data as Profile | null;
+  const isAdmin = profile?.role === "admin";
+
+  // Only fetch other stores list if user is Admin (used for Move photo feature)
+  const allStores = isAdmin ? await getAllStoresSimple() : [];
+  const otherStores = allStores.filter((s) => s.id !== id);
 
   const store = storeResult.data as Store;
   const items = (itemsResult.data || []) as OrderItem[];
@@ -45,9 +51,6 @@ export default async function StoreDetailPage({
       counts[item.status]++;
     }
   }
-
-  const profile = profileResult.data as Profile | null;
-  const otherStores = allStores.filter((s) => s.id !== id);
 
   return (
     <StoreDetail

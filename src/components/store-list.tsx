@@ -486,6 +486,7 @@ function StoreCard({
         ) : (
           <Link
             href={`/stores/${store.id}`}
+            prefetch={true}
             className="flex items-center gap-3.5 p-3 rounded-2xl bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated/80 transition-all active:scale-[0.99] shadow-md hover:shadow-xl"
           >
           {/* Cover Thumbnail */}
@@ -638,6 +639,7 @@ function StoreCard({
       ) : (
         <Link
           href={`/stores/${store.id}`}
+          prefetch={true}
           className="block rounded-3xl overflow-hidden bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-2xl hover:-translate-y-1"
         >
         {/* Cover Aspect Box */}
