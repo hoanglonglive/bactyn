@@ -91,11 +91,18 @@ export function PhotoGrid({
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-extrabold text-white truncate">
-                      {item.order_code ? `#${item.order_code}` : "Đơn hàng mới"}
-                    </p>
+                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                      <p className="text-xs font-extrabold text-white truncate">
+                        {item.order_code ? `#${item.order_code}` : "Đơn hàng mới"}
+                      </p>
+                      {item.store_name && (
+                        <span className="text-[9px] font-bold bg-indigo-500/25 text-indigo-300 border border-indigo-500/35 px-1.5 py-0.2 rounded-md flex-shrink-0">
+                          🏪 {item.store_name}
+                        </span>
+                      )}
+                    </div>
                     <span
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${statusConfig.bgColor} ${statusConfig.color}`}
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${statusConfig.bgColor} ${statusConfig.color}`}
                     >
                       {statusConfig.labelVi}
                     </span>
@@ -192,6 +199,13 @@ export function PhotoGrid({
                   {statusConfig.labelVi}
                 </span>
               </div>
+
+              {/* Store Name Badge Tag */}
+              {item.store_name && !selectMode && (
+                <div className="absolute top-2 right-2 bg-indigo-950/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-indigo-400/30 text-[9px] font-bold text-indigo-200 shadow-lg truncate max-w-[110px]">
+                  🏪 {item.store_name}
+                </div>
+              )}
 
               {/* Info Overlay */}
               {(item.order_code || item.customer_name || item.size || item.color) && (

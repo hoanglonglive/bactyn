@@ -41,6 +41,7 @@ export interface StoreWithCounts extends Store {
 export interface OrderItem {
   id: string;
   store_id: string;
+  store_name?: string;
   image_url: string;
   thumbnail_url: string;
   status: OrderStatus;

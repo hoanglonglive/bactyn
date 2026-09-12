@@ -22,10 +22,13 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
-import type { StoreWithCounts, Profile } from "@/lib/types";
+import type { StoreWithCounts, Profile, OrderItem, OrderStatus } from "@/lib/types";
 import { CreateStoreDialog } from "./create-store-dialog";
 import { DeleteStoreDialog } from "./delete-store-dialog";
 import { AdminUserModal } from "./admin-user-modal";
+import { StatusFilter } from "./status-filter";
+import { PhotoGrid } from "./photo-grid";
+import { PhotoDetailModal } from "./photo-detail-modal";
 import { signOut } from "@/app/actions/auth-actions";
 import { bulkDeleteStores } from "@/app/actions/store-actions";
 import { useRouter } from "next/navigation";
@@ -33,15 +36,21 @@ import { useRouter } from "next/navigation";
 interface StoreListProps {
   stores: StoreWithCounts[];
   profile: Profile | null;
+  initialAllItems?: OrderItem[];
 }
 
-export function StoreList({ stores, profile }: StoreListProps) {
+export function StoreList({ stores, profile, initialAllItems = [] }: StoreListProps) {
   const router = useRouter();
 
   // Auto refresh on mount so homepage status counts stay 100% up to date after updates
   useEffect(() => {
     router.refresh();
   }, [router]);
+
+  const [allItems, setAllItems] = useState<OrderItem[]>(initialAllItems);
+  const [activeTab, setActiveTab] = useState<"stores" | "all-photos">("stores");
+  const [activeStatusFilter, setActiveStatusFilter] = useState<OrderStatus | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<OrderItem | null>(null);
 
   const [showCreate, setShowCreate] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -85,7 +94,6 @@ export function StoreList({ stores, profile }: StoreListProps) {
     setBulkDeleting(false);
     setShowBulkDeleteConfirm(false);
     setSelectedIds(new Set());
-    setSelectMode(false);
     router.refresh();
   };
 
@@ -119,6 +127,91 @@ export function StoreList({ stores, profile }: StoreListProps) {
       purchasedCount,
     };
   }, [stores]);
+
+  // Sync initialAllItems when props update
+  useEffect(() => {
+    if (initialAllItems && initialAllItems.length > 0) {
+      setAllItems(initialAllItems);
+    }
+  }, [initialAllItems]);
+
+  // Aggregate global status counts across ALL stores
+  const globalStatusCounts = useMemo(() => {
+    const counts = {
+      total: allItems.length,
+      PURCHASED: 0,
+      PARTIALLY_PURCHASED: 0,
+      PENDING_ORDER: 0,
+      DELIVERED: 0,
+      IN_STOCK: 0,
+      OUT_OF_STOCK: 0,
+    };
+    for (const item of allItems) {
+      if (item.status in counts) {
+        counts[item.status]++;
+      }
+    }
+    return counts;
+  }, [allItems]);
+
+  // Filter all order items when on "all-photos" tab or when status filter is selected
+  const filteredAllPhotos = useMemo(() => {
+    return allItems.filter((item) => {
+      // 1. Status Filter
+      if (activeStatusFilter && item.status !== activeStatusFilter) return false;
+
+      // 2. Search Query Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchCode = item.order_code?.toLowerCase().includes(q);
+        const matchName = item.customer_name?.toLowerCase().includes(q);
+        const matchNote = item.note?.toLowerCase().includes(q);
+        const matchSize = item.size?.toLowerCase().includes(q);
+        const matchColor = item.color?.toLowerCase().includes(q);
+        const matchStore = item.store_name?.toLowerCase().includes(q);
+        return matchCode || matchName || matchNote || matchSize || matchColor || matchStore;
+      }
+
+      return true;
+    });
+  }, [allItems, activeStatusFilter, searchQuery]);
+
+  const handleStatusFilterChange = (status: OrderStatus | null) => {
+    setActiveStatusFilter(status);
+    if (status !== null) {
+      setActiveTab("all-photos");
+    }
+  };
+
+  const handlePhotoStatusUpdate = (photoId: string, newStatus: OrderStatus) => {
+    setAllItems((prev) =>
+      prev.map((item) => (item.id === photoId ? { ...item, status: newStatus } : item))
+    );
+    router.refresh();
+  };
+
+  const handlePhotoMoved = (photoId: string) => {
+    setAllItems((prev) => prev.filter((item) => item.id !== photoId));
+    setSelectedPhoto(null);
+    router.refresh();
+  };
+
+  const handlePhotoDeleted = (photoId: string) => {
+    setAllItems((prev) => prev.filter((item) => item.id !== photoId));
+    setSelectedPhoto(null);
+    router.refresh();
+  };
+
+  const handlePhotoInfoUpdate = (photoId: string, data: Partial<OrderItem>) => {
+    setAllItems((prev) =>
+      prev.map((item) => (item.id === photoId ? { ...item, ...data } : item))
+    );
+  };
+
+  const otherStores = useMemo(
+    () => stores.map((s) => ({ id: s.id, name: s.name })),
+    [stores]
+  );
 
   return (
     <div className="min-h-dvh bg-surface pb-28 select-none">
@@ -199,14 +292,57 @@ export function StoreList({ stores, profile }: StoreListProps) {
           </div>
         </div>
 
-        {/* Search & Filter Toolbar */}
+        {/* Global Status Filter Bar */}
+        <div className="-mx-4">
+          <StatusFilter
+            counts={globalStatusCounts}
+            activeFilter={activeStatusFilter}
+            onFilterChange={handleStatusFilterChange}
+          />
+        </div>
+
+        {/* Navigation Tabs Bar */}
+        <div className="flex items-center gap-2 p-1 rounded-2xl bg-surface-elevated/80 border border-border-subtle shadow-md">
+          <button
+            onClick={() => {
+              setActiveTab("stores");
+              setActiveStatusFilter(null);
+            }}
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              activeTab === "stores" && !activeStatusFilter
+                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <StoreIcon className="w-4 h-4 text-indigo-300" />
+            <span>Album Gian Hàng ({filteredStores.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("all-photos")}
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              activeTab === "all-photos" || activeStatusFilter
+                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <ImageIcon className="w-4 h-4 text-purple-300" />
+            <span>Tất Cả Ảnh Đơn Hàng ({filteredAllPhotos.length})</span>
+          </button>
+        </div>
+
+        {/* Search & View Mode Toolbar */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm gian hàng..."
+              placeholder={
+                activeTab === "all-photos" || activeStatusFilter
+                  ? "Tìm theo mã đơn, tên khách, gian hàng, size..."
+                  : "Tìm kiếm gian hàng..."
+              }
               className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-surface-elevated border border-border-subtle text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner"
             />
             {searchQuery && (
@@ -245,8 +381,8 @@ export function StoreList({ stores, profile }: StoreListProps) {
             </button>
           </div>
 
-          {/* Select Mode Toggle (Admin) */}
-          {isAdmin && (
+          {/* Select Mode Toggle (Admin) - Only for stores tab */}
+          {isAdmin && activeTab === "stores" && !activeStatusFilter && (
             <button
               onClick={() => {
                 setSelectMode(!selectMode);
@@ -265,52 +401,61 @@ export function StoreList({ stores, profile }: StoreListProps) {
           )}
         </div>
 
-        {/* Store Grid / List View */}
-        {filteredStores.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-3xl border border-dashed border-white/10 bg-surface-elevated/40">
-            <div className="w-16 h-16 rounded-2xl bg-surface-overlay flex items-center justify-center mb-4 shadow-xl border border-border-subtle">
-              <StoreIcon className="w-8 h-8 text-white/20" />
+        {/* Tab 1: Store Grid / List View */}
+        {activeTab === "stores" && !activeStatusFilter ? (
+          filteredStores.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-3xl border border-dashed border-white/10 bg-surface-elevated/40">
+              <div className="w-16 h-16 rounded-2xl bg-surface-overlay flex items-center justify-center mb-4 shadow-xl border border-border-subtle">
+                <StoreIcon className="w-8 h-8 text-white/20" />
+              </div>
+              <p className="text-white/60 text-sm font-semibold">
+                {searchQuery ? "Không tìm thấy gian hàng phù hợp" : "Chưa có gian hàng nào"}
+              </p>
+              <p className="text-white/30 text-xs mt-1 max-w-xs">
+                {searchQuery
+                  ? "Thử tìm kiếm với từ khóa khác"
+                  : "Bấm nút bên dưới để khởi tạo album gian hàng đầu tiên"}
+              </p>
+              {!searchQuery && (
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="mt-5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all active:scale-95 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tạo gian hàng mới
+                </button>
+              )}
             </div>
-            <p className="text-white/60 text-sm font-semibold">
-              {searchQuery ? "Không tìm thấy gian hàng phù hợp" : "Chưa có gian hàng nào"}
-            </p>
-            <p className="text-white/30 text-xs mt-1 max-w-xs">
-              {searchQuery
-                ? "Thử tìm kiếm với từ khóa khác"
-                : "Bấm nút bên dưới để khởi tạo album gian hàng đầu tiên"}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => setShowCreate(true)}
-                className="mt-5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all active:scale-95 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Tạo gian hàng mới
-              </button>
-            )}
-          </div>
+          ) : (
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+                  : "flex flex-col gap-3"
+              }
+            >
+              {filteredStores.map((store, i) => (
+                <StoreCard
+                  key={store.id}
+                  store={store}
+                  index={i}
+                  viewMode={viewMode}
+                  isAdmin={isAdmin}
+                  selectMode={selectMode}
+                  isSelected={selectedIds.has(store.id)}
+                  onToggleSelect={() => toggleSelectStore(store.id)}
+                  onDelete={() => setDeleteTarget(store)}
+                />
+              ))}
+            </div>
+          )
         ) : (
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
-                : "flex flex-col gap-3"
-            }
-          >
-            {filteredStores.map((store, i) => (
-              <StoreCard
-                key={store.id}
-                store={store}
-                index={i}
-                viewMode={viewMode}
-                isAdmin={isAdmin}
-                selectMode={selectMode}
-                isSelected={selectedIds.has(store.id)}
-                onToggleSelect={() => toggleSelectStore(store.id)}
-                onDelete={() => setDeleteTarget(store)}
-              />
-            ))}
-          </div>
+          /* Tab 2: Unified All Order Photos Grid / List View across ALL stores */
+          <PhotoGrid
+            items={filteredAllPhotos}
+            viewMode={viewMode}
+            onPhotoClick={setSelectedPhoto}
+          />
         )}
       </main>
 
@@ -339,6 +484,23 @@ export function StoreList({ stores, profile }: StoreListProps) {
         <AdminUserModal
           onClose={() => setShowUserModal(false)}
           currentUserId={profile?.id}
+        />
+      )}
+
+      {/* Photo Detail Lightbox Modal for All Photos View */}
+      {selectedPhoto && (
+        <PhotoDetailModal
+          key={selectedPhoto.id}
+          photo={selectedPhoto}
+          allPhotos={filteredAllPhotos}
+          isAdmin={isAdmin}
+          otherStores={otherStores}
+          onClose={() => setSelectedPhoto(null)}
+          onStatusUpdate={handlePhotoStatusUpdate}
+          onPhotoMoved={handlePhotoMoved}
+          onPhotoDeleted={handlePhotoDeleted}
+          onInfoUpdate={handlePhotoInfoUpdate}
+          onNavigatePhoto={setSelectedPhoto}
         />
       )}
 

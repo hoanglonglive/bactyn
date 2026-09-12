@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { OrderStatus } from "@/lib/types";
+import type { OrderItem, OrderStatus } from "@/lib/types";
 
 export async function uploadOrderPhotos(storeId: string, formData: FormData) {
   const supabase = await createClient();
@@ -468,6 +468,45 @@ export async function getAllStoresSimple() {
     .order("name");
 
   return data || [];
+}
+
+export async function getAllOrderItems(statusFilter?: OrderStatus | null) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("order_items")
+    .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, created_at, updated_at, created_by, stores(id, name)")
+    .order("created_at", { ascending: false });
+
+  if (statusFilter) {
+    query = query.eq("status", statusFilter);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    // Fallback if relation syntax varies
+    const { data: fallbackData, error: fallbackErr } = await supabase
+      .from("order_items")
+      .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, created_at, updated_at, created_by")
+      .order("created_at", { ascending: false });
+
+    if (fallbackErr) {
+      return { error: fallbackErr.message, data: null };
+    }
+
+    return { data: fallbackData as OrderItem[], error: null };
+  }
+
+  const formattedData = (data || []).map((item: any) => {
+    const storeObj = Array.isArray(item.stores) ? item.stores[0] : item.stores;
+    return {
+      ...item,
+      store_name: storeObj?.name || "",
+    } as OrderItem;
+  });
+
+  return { data: formattedData, error: null };
 }
 
 function extractStoragePath(publicUrl: string): string | null {
