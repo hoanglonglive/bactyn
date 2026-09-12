@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Maximize2,
+  Minimize2,
   Lock,
   Eye,
   FileText,
@@ -295,15 +296,24 @@ export function PhotoDetailModal({
             />
           </div>
 
-          <a
-            href={currentPhoto.image_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute z-10 bottom-4 right-4 p-2.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 text-white/80 hover:text-white transition-all active:scale-95 shadow-lg"
-            title="Xem ảnh gốc HD"
+          {/* Full Screen Toggle Button at bottom right */}
+          <button
+            onClick={() => setExpandedImage(!expandedImage)}
+            className="absolute z-10 bottom-4 right-4 px-3 py-2 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-white/90 hover:text-white transition-all active:scale-95 shadow-xl flex items-center gap-1.5 text-xs font-semibold"
+            title={expandedImage ? "Thu nhỏ xem thông tin" : "Xem toàn màn hình đầy đủ"}
           >
-            <Maximize2 className="w-4 h-4" />
-          </a>
+            {expandedImage ? (
+              <>
+                <Minimize2 className="w-4 h-4 text-indigo-400" />
+                <span className="hidden sm:inline">Thu nhỏ</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-4 h-4 text-indigo-400" />
+                <span className="hidden sm:inline">Toàn màn hình</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Status Selector Bar with Role-Based Permission Enforcements */}
