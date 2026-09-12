@@ -13,7 +13,7 @@
   --color-brand-700: #b45309;
   --color-brand-800: #92400e;
   --color-brand-900: #78350f;
-  --color-surface: transparent;
+  --color-surface: #000000;
   --color-surface-elevated: rgba(255, 255, 255, 0.05);
   --color-surface-overlay: rgba(255, 255, 255, 0.08);
   --color-border-subtle: transparent;
@@ -64,11 +64,7 @@ html, body {
 
 body {
   background-color: #000000;
-  background-image: url('/backgroundss.jpg');
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-image: none;
   color: #ffffff;
   overscroll-behavior: none;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";

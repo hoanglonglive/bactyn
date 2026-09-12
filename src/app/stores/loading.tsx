@@ -1,6 +1,6 @@
 export default function StoresLoading() {
   return (
-    <div className="min-h-dvh bg-transparent p-4 max-w-5xl mx-auto space-y-4 animate-pulse">
+    <div className="min-h-dvh bg-black p-4 max-w-5xl mx-auto space-y-4 animate-pulse">
       {/* Header Skeleton */}
       <header className="flex items-center justify-between py-2">
         <div className="flex items-center gap-3">

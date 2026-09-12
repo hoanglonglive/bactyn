@@ -1,6 +1,6 @@
 export default function StoreDetailLoading() {
   return (
-    <div className="min-h-dvh bg-transparent animate-pulse">
+    <div className="min-h-dvh bg-black animate-pulse">
       {/* Header Skeleton */}
       <header className="sticky top-0 z-30 glass border-b border-white/5 p-4 space-y-3">
         <div className="flex items-center gap-3">
