@@ -78,6 +78,7 @@ export async function uploadOrderPhotos(storeId: string, formData: FormData) {
   }
 
   revalidatePath(`/stores/${storeId}`);
+  revalidatePath("/stores");
   return { results };
 }
 
@@ -94,15 +95,21 @@ export async function updatePhotoStatus(
     return { error: "Unauthorized" };
   }
 
-  const { error } = await supabase
+  const { data: item, error } = await supabase
     .from("order_items")
-    .update({ status: newStatus })
-    .eq("id", photoId);
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq("id", photoId)
+    .select("store_id")
+    .single();
 
   if (error) {
     return { error: error.message };
   }
 
+  if (item?.store_id) {
+    revalidatePath(`/stores/${item.store_id}`);
+  }
+  revalidatePath("/stores");
   return { success: true };
 }
 
@@ -125,15 +132,21 @@ export async function updatePhotoInfo(
     return { error: "Unauthorized" };
   }
 
-  const { error } = await supabase
+  const { data: item, error } = await supabase
     .from("order_items")
-    .update(data)
-    .eq("id", photoId);
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq("id", photoId)
+    .select("store_id")
+    .single();
 
   if (error) {
     return { error: error.message };
   }
 
+  if (item?.store_id) {
+    revalidatePath(`/stores/${item.store_id}`);
+  }
+  revalidatePath("/stores");
   return { success: true };
 }
 
@@ -150,15 +163,27 @@ export async function movePhotoToStore(
     return { error: "Unauthorized" };
   }
 
+  // Get previous store_id
+  const { data: oldItem } = await supabase
+    .from("order_items")
+    .select("store_id")
+    .eq("id", photoId)
+    .single();
+
   const { error } = await supabase
     .from("order_items")
-    .update({ store_id: targetStoreId })
+    .update({ store_id: targetStoreId, updated_at: new Date().toISOString() })
     .eq("id", photoId);
 
   if (error) {
     return { error: error.message };
   }
 
+  if (oldItem?.store_id) {
+    revalidatePath(`/stores/${oldItem.store_id}`);
+  }
+  revalidatePath(`/stores/${targetStoreId}`);
+  revalidatePath("/stores");
   return { success: true };
 }
 
@@ -205,6 +230,7 @@ export async function deleteOrderPhoto(photoId: string) {
   }
 
   revalidatePath(`/stores/${photo.store_id}`);
+  revalidatePath("/stores");
   return { success: true };
 }
 

@@ -186,8 +186,9 @@ export function StoreDetail({
           [newStatus]: prev[newStatus] + 1,
         }));
       }
+      router.refresh();
     },
-    [items]
+    [items, router]
   );
 
   const handlePhotoMoved = useCallback(
@@ -202,8 +203,9 @@ export function StoreDetail({
         }));
       }
       setSelectedPhoto(null);
+      router.refresh();
     },
-    [items]
+    [items, router]
   );
 
   const handlePhotoDeleted = useCallback(
@@ -218,8 +220,9 @@ export function StoreDetail({
         }));
       }
       setSelectedPhoto(null);
+      router.refresh();
     },
-    [items]
+    [items, router]
   );
 
   const handleInfoUpdate = useCallback(

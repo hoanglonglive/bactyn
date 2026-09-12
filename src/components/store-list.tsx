@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -37,6 +37,12 @@ interface StoreListProps {
 
 export function StoreList({ stores, profile }: StoreListProps) {
   const router = useRouter();
+
+  // Auto refresh on mount so homepage status counts stay 100% up to date after updates
+  useEffect(() => {
+    router.refresh();
+  }, [router]);
+
   const [showCreate, setShowCreate] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StoreWithCounts | null>(null);
@@ -407,6 +413,40 @@ export function StoreList({ stores, profile }: StoreListProps) {
   );
 }
 
+function StoreStatusBreakdown({ store }: { store: StoreWithCounts }) {
+  const items = [
+    { key: "purchased", label: "Đã mua", emoji: "🟢", color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/25", count: store.purchased_count || 0 },
+    { key: "partially", label: "Chưa mua xong", emoji: "🟠", color: "text-orange-400 bg-orange-500/15 border-orange-500/25", count: store.partially_purchased_count || 0 },
+    { key: "pending", label: "Chờ order", emoji: "🟡", color: "text-amber-400 bg-amber-500/15 border-amber-500/25", count: store.pending_count || 0 },
+    { key: "delivered", label: "Đã giao", emoji: "🔵", color: "text-sky-400 bg-sky-500/15 border-sky-500/25", count: store.delivered_count || 0 },
+    { key: "in_stock", label: "Tồn kho", emoji: "📦", color: "text-purple-400 bg-purple-500/15 border-purple-500/25", count: store.in_stock_count || 0 },
+    { key: "out_of_stock", label: "Hết hàng", emoji: "🔴", color: "text-rose-400 bg-rose-500/15 border-rose-500/25", count: store.out_of_stock_count || 0 },
+  ].filter((st) => st.count > 0);
+
+  if (store.total_items === 0 || items.length === 0) {
+    return (
+      <div className="mt-2 text-[10px] font-medium text-white/30 italic">
+        Chưa có đơn hàng
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+      {items.map((st) => (
+        <span
+          key={st.key}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${st.color}`}
+        >
+          <span>{st.emoji}</span>
+          <span>{st.label}:</span>
+          <span className="font-extrabold">{st.count}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function StoreCard({
   store,
   index,
@@ -481,6 +521,7 @@ function StoreCard({
                   {store.note}
                 </p>
               )}
+              <StoreStatusBreakdown store={store} />
             </div>
           </div>
         ) : (
@@ -522,39 +563,8 @@ function StoreCard({
               </p>
             )}
 
-            {/* Status counts mini pills */}
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              {store.purchased_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  🟢 {store.purchased_count} đã mua xong
-                </span>
-              )}
-              {store.partially_purchased_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                  🟠 {store.partially_purchased_count} chưa mua xong
-                </span>
-              )}
-              {store.pending_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  🟡 {store.pending_count} chờ order
-                </span>
-              )}
-              {store.delivered_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                  🔵 {store.delivered_count} đã giao
-                </span>
-              )}
-              {store.in_stock_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                  📦 {store.in_stock_count} tồn kho
-                </span>
-              )}
-              {store.out_of_stock_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                  🔴 {store.out_of_stock_count} hết hàng
-                </span>
-              )}
-            </div>
+            {/* Status Breakdown Pills */}
+            <StoreStatusBreakdown store={store} />
           </div>
         </Link>
         )}
@@ -634,6 +644,7 @@ function StoreCard({
                 {store.note}
               </p>
             )}
+            <StoreStatusBreakdown store={store} />
           </div>
         </div>
       ) : (
@@ -680,44 +691,7 @@ function StoreCard({
           )}
 
           {/* Status Breakdown Pills */}
-          {store.total_items > 0 ? (
-            <div className="flex items-center gap-1 mt-2.5 flex-wrap">
-              {store.purchased_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                  🟢 {store.purchased_count}
-                </span>
-              )}
-              {store.partially_purchased_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-orange-500/15 text-orange-400 border border-orange-500/20">
-                  🟠 {store.partially_purchased_count}
-                </span>
-              )}
-              {store.pending_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/20">
-                  🟡 {store.pending_count}
-                </span>
-              )}
-              {store.delivered_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/20">
-                  🔵 {store.delivered_count}
-                </span>
-              )}
-              {store.in_stock_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/20">
-                  📦 {store.in_stock_count}
-                </span>
-              )}
-              {store.out_of_stock_count > 0 && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-rose-500/15 text-rose-400 border border-rose-500/20">
-                  🔴 {store.out_of_stock_count}
-                </span>
-              )}
-            </div>
-          ) : (
-            <span className="inline-block mt-2.5 text-[9px] font-medium text-white/25">
-              Chưa có đơn hàng
-            </span>
-          )}
+          <StoreStatusBreakdown store={store} />
         </div>
       </Link>
       )}
