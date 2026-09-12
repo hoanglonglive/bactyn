@@ -225,14 +225,16 @@ export function StoreList({ stores, profile }: StoreListProps) {
         )}
       </main>
 
-      {/* Floating Action Button (FAB) */}
-      <button
-        onClick={() => setShowCreate(true)}
-        className="fixed bottom-6 right-6 z-40 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 shadow-xl shadow-indigo-500/35 flex items-center gap-2.5 hover:shadow-indigo-500/50 active:scale-95 transition-all border border-white/20 text-white font-bold text-xs"
-      >
-        <Plus className="w-5 h-5 text-white" />
-        <span className="hidden sm:inline">Tạo gian hàng mới</span>
-      </button>
+      {/* Floating Action Button (FAB) - Admin Only */}
+      {isAdmin && (
+        <button
+          onClick={() => setShowCreate(true)}
+          className="fixed bottom-6 right-6 z-40 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 shadow-xl shadow-indigo-500/35 flex items-center gap-2.5 hover:shadow-indigo-500/50 active:scale-95 transition-all border border-white/20 text-white font-bold text-xs"
+        >
+          <Plus className="w-5 h-5 text-white" />
+          <span className="hidden sm:inline">Tạo gian hàng mới</span>
+        </button>
+      )}
 
       {/* Dialogs */}
       {showCreate && (

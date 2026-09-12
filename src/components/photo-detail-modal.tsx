@@ -10,6 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Maximize2,
+  Lock,
+  Eye,
+  FileText,
 } from "lucide-react";
 import type { OrderItem, OrderStatus } from "@/lib/types";
 import { STATUS_CONFIG } from "@/lib/types";
@@ -34,13 +37,19 @@ interface Props {
   onNavigatePhoto?: (targetPhoto: OrderItem) => void;
 }
 
-const STATUSES: OrderStatus[] = [
+const ALL_STATUSES: OrderStatus[] = [
   "PURCHASED",
   "PARTIALLY_PURCHASED",
   "PENDING_ORDER",
   "DELIVERED",
   "IN_STOCK",
   "OUT_OF_STOCK",
+];
+
+const STAFF_ALLOWED_STATUSES: OrderStatus[] = [
+  "DELIVERED",
+  "IN_STOCK",
+  "PARTIALLY_PURCHASED",
 ];
 
 export function PhotoDetailModal({
@@ -62,6 +71,7 @@ export function PhotoDetailModal({
   const [moving, setMoving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusAnimating, setStatusAnimating] = useState<OrderStatus | null>(null);
+  const [expandedImage, setExpandedImage] = useState(false);
 
   // Editable fields
   const [orderCode, setOrderCode] = useState(photo.order_code || "");
@@ -126,6 +136,11 @@ export function PhotoDetailModal({
   }, [handlePrev, handleNext, onClose]);
 
   async function handleStatusChange(newStatus: OrderStatus) {
+    // Check staff permissions
+    if (!isAdmin && !STAFF_ALLOWED_STATUSES.includes(newStatus)) {
+      return;
+    }
+
     if (newStatus === currentStatus) return;
 
     setStatusAnimating(newStatus);
@@ -152,6 +167,7 @@ export function PhotoDetailModal({
   }
 
   async function handleMove(targetStoreId: string) {
+    if (!isAdmin) return;
     setMoving(true);
     const result = await movePhotoToStore(currentPhoto.id, targetStoreId);
 
@@ -164,6 +180,7 @@ export function PhotoDetailModal({
   }
 
   async function handleDelete() {
+    if (!isAdmin) return;
     setDeleting(true);
     const result = await deleteOrderPhoto(currentPhoto.id);
 
@@ -185,44 +202,72 @@ export function PhotoDetailModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Counter */}
-        {allPhotos.length > 0 && (
-          <div className="text-xs font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/10">
-            {currentIndex + 1} / {allPhotos.length}
-          </div>
-        )}
+        {/* Counter & Toggle Full Screenshot Mode */}
+        <div className="flex items-center gap-2">
+          {allPhotos.length > 0 && (
+            <div className="text-xs font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+              {currentIndex + 1} / {allPhotos.length}
+            </div>
+          )}
+
+          <button
+            onClick={() => setExpandedImage(!expandedImage)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-medium border border-indigo-500/30"
+          >
+            {expandedImage ? (
+              <>
+                <FileText className="w-3.5 h-3.5" />
+                <span>Chi tiết</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5" />
+                <span>Toàn màn hình</span>
+              </>
+            )}
+          </button>
+        </div>
 
         <div className="flex items-center gap-2">
-          {/* Move Button */}
-          <button
-            onClick={() => setShowMoveMenu(!showMoveMenu)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 text-xs font-semibold hover:bg-white/20 transition-all active:scale-95 border border-white/10"
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5" />
-            <span>Chuyển</span>
-            <ChevronDown className="w-3 h-3 opacity-60" />
-          </button>
+          {/* Admin Move Button */}
+          {isAdmin && (
+            <button
+              onClick={() => setShowMoveMenu(!showMoveMenu)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 text-xs font-semibold hover:bg-white/20 transition-all active:scale-95 border border-white/10"
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5" />
+              <span>Chuyển</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+          )}
 
-          {/* Delete Button (Available for all authenticated users) */}
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/25 text-rose-300 text-xs font-semibold hover:bg-rose-500/40 transition-all active:scale-95 border border-rose-500/30 shadow-md"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Xóa</span>
-          </button>
+          {/* Admin Delete Button ONLY */}
+          {isAdmin && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/25 text-rose-300 text-xs font-semibold hover:bg-rose-500/40 transition-all active:scale-95 border border-rose-500/30 shadow-md"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Xóa</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col overflow-y-auto">
-        {/* Image Preview Container with Arrow Controls (Flicker-Free Instant Transition) */}
-        <div className="relative flex-1 flex items-center justify-center p-2 min-h-[360px] max-h-[55dvh] group">
+        {/* Full Mobile Screenshot Container (Optimized 9:16 Aspect Ratio View) */}
+        <div
+          className={cn(
+            "relative flex-1 flex items-center justify-center p-2 group transition-all duration-300",
+            expandedImage ? "min-h-[80dvh] max-h-[88dvh]" : "min-h-[480px] max-h-[72dvh]"
+          )}
+        >
           {/* Previous Arrow */}
           {hasPrev && (
             <button
               onClick={handlePrev}
-              className="absolute left-3 z-10 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              className="absolute left-3 z-20 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
               title="Ảnh trước (←)"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -233,147 +278,169 @@ export function PhotoDetailModal({
           {hasNext && (
             <button
               onClick={handleNext}
-              className="absolute right-3 z-10 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              className="absolute right-3 z-20 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
               title="Ảnh sau (→)"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
 
-          {/* Flicker-Free Main Image */}
-          <img
-            key={currentPhoto.id}
-            src={currentPhoto.image_url || currentPhoto.thumbnail_url}
-            alt={currentPhoto.order_code || "Order photo"}
-            className="w-full h-full rounded-2xl object-contain shadow-2xl"
-          />
+          {/* High Definition Mobile Screenshot Image */}
+          <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+            <img
+              key={currentPhoto.id}
+              src={currentPhoto.image_url || currentPhoto.thumbnail_url}
+              alt={currentPhoto.order_code || "Ảnh đơn hàng màn hình chụp"}
+              className="max-w-full max-h-full rounded-xl object-contain shadow-2xl transition-transform duration-200"
+            />
+          </div>
 
           <a
             href={currentPhoto.image_url}
             target="_blank"
             rel="noopener noreferrer"
             className="absolute z-10 bottom-4 right-4 p-2.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 text-white/80 hover:text-white transition-all active:scale-95 shadow-lg"
-            title="Xem ảnh gốc"
+            title="Xem ảnh gốc HD"
           >
             <Maximize2 className="w-4 h-4" />
           </a>
         </div>
 
-        {/* Status Selector Bar (All 6 Statuses) */}
+        {/* Status Selector Bar with Role-Based Permission Enforcements */}
         <div className="px-4 py-3 bg-surface/60 border-y border-white/10">
-          <p className="text-[11px] font-bold text-white/40 mb-2 uppercase tracking-wider">
-            Trạng thái đơn hàng
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
+              Cập nhật trạng thái đơn
+            </p>
+            {!isAdmin && (
+              <span className="text-[10px] text-amber-300/80 font-medium flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                Nhân viên (Quyền hạn chế)
+              </span>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-            {STATUSES.map((status) => {
+            {ALL_STATUSES.map((status) => {
               const config = STATUS_CONFIG[status];
               const isActive = currentStatus === status;
+              const isAllowedForStaff = STAFF_ALLOWED_STATUSES.includes(status);
+              const canClick = isAdmin || isAllowedForStaff;
 
               return (
                 <button
                   key={status}
                   onClick={() => handleStatusChange(status)}
+                  disabled={!canClick}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-md",
+                    "relative flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-md",
                     isActive
-                      ? config.bgColor + " " + config.color + " border-white/30 shadow-indigo-500/20 ring-2 ring-indigo-500/40"
-                      : "border-border-subtle bg-surface-overlay/60 text-white/50 hover:text-white/80 hover:bg-surface-overlay",
+                      ? config.bgColor + " " + config.color + " border-white/30 ring-2 ring-indigo-500/40"
+                      : canClick
+                      ? "border-border-subtle bg-surface-overlay/60 text-white/50 hover:text-white/80 hover:bg-surface-overlay"
+                      : "border-border-subtle/30 bg-surface/30 text-white/20 cursor-not-allowed opacity-40",
                     statusAnimating === status && "animate-bounce"
                   )}
+                  title={!canClick ? "Trạng thái này chỉ dành cho Admin" : config.labelVi}
                 >
                   <span className="text-base">{config.emoji}</span>
                   <span className="truncate">{config.labelVi}</span>
+                  {!canClick && (
+                    <Lock className="w-3 h-3 absolute top-1 right-1 text-white/30" />
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Fast Editable Details with Auto-Save on Blur */}
-        <div className="p-4 space-y-3 max-w-lg mx-auto w-full">
-          <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
-            Chi tiết thông tin đơn
-          </p>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
-                Mã đơn hàng
-              </label>
-              <input
-                value={orderCode}
-                onChange={(e) => setOrderCode(e.target.value)}
-                onBlur={handleSaveInfo}
-                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                placeholder="Ví dụ: ORD-102"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
-                Tên khách hàng
-              </label>
-              <input
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                onBlur={handleSaveInfo}
-                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                placeholder="Nguyễn Văn A"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
-                Kích thước (Size)
-              </label>
-              <input
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                onBlur={handleSaveInfo}
-                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                placeholder="M, L, XL, 42..."
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
-                Màu sắc
-              </label>
-              <input
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                onBlur={handleSaveInfo}
-                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                placeholder="Đen, Trắng, Đỏ..."
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-semibold text-white/50 mb-1 block">
-              Ghi chú thêm
-            </label>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              onBlur={handleSaveInfo}
-              rows={2}
-              className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"
-              placeholder="Nhập thêm chi tiết ghi chú..."
-            />
-          </div>
-
-          {saving && (
-            <p className="text-[10px] text-indigo-400 flex items-center justify-end gap-1 font-medium animate-pulse">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              Đang tự động lưu...
+        {/* Editable Details Form */}
+        {!expandedImage && (
+          <div className="p-4 space-y-3 max-w-lg mx-auto w-full">
+            <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
+              Chi tiết thông tin đơn hàng
             </p>
-          )}
-        </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                  Mã đơn hàng
+                </label>
+                <input
+                  value={orderCode}
+                  onChange={(e) => setOrderCode(e.target.value)}
+                  onBlur={handleSaveInfo}
+                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="Ví dụ: ORD-102"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                  Tên khách hàng
+                </label>
+                <input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  onBlur={handleSaveInfo}
+                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="Nguyễn Văn A"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                  Kích thước (Size)
+                </label>
+                <input
+                  value={size}
+                  onChange={(e) => setSize(e.target.value)}
+                  onBlur={handleSaveInfo}
+                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="M, L, XL, 42..."
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                  Màu sắc
+                </label>
+                <input
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  onBlur={handleSaveInfo}
+                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="Đen, Trắng, Đỏ..."
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                Ghi chú thêm
+              </label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                onBlur={handleSaveInfo}
+                rows={2}
+                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"
+                placeholder="Nhập thêm chi tiết ghi chú..."
+              />
+            </div>
+
+            {saving && (
+              <p className="text-[10px] text-indigo-400 flex items-center justify-end gap-1 font-medium animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Đang tự động lưu...
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Move Menu Dropdown */}
-      {showMoveMenu && (
+      {/* Admin Move Menu Dropdown */}
+      {showMoveMenu && isAdmin && (
         <div className="fixed inset-0 z-60" onClick={() => setShowMoveMenu(false)}>
           <div
             className="absolute top-14 right-4 w-60 rounded-2xl bg-surface-elevated border border-border-subtle shadow-2xl py-2 animate-fade-in"
@@ -407,8 +474,8 @@ export function PhotoDetailModal({
         </div>
       )}
 
-      {/* Delete Confirmation */}
-      {showDeleteConfirm && (
+      {/* Admin Delete Confirmation */}
+      {showDeleteConfirm && isAdmin && (
         <div className="fixed inset-0 z-60 flex items-center justify-center px-6">
           <div
             className="absolute inset-0 bg-black/75 backdrop-blur-sm"
