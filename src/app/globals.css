@@ -28,33 +28,25 @@
   }
 }
 
-/* Custom scrollbar */
+/* Global Hide Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(251, 191, 36, 0.25);
-  border-radius: 9999px;
-  backdrop-filter: blur(4px);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(251, 191, 36, 0.5);
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* Hide scrollbar utility */
 .scrollbar-none::-webkit-scrollbar {
-  display: none;
+  display: none !important;
 }
 .scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 html, body {
