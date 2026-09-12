@@ -4,6 +4,83 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { OrderStatus } from "@/lib/types";
 
+export async function uploadOrderPhotos(storeId: string, formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  const files = formData.getAll("files") as File[];
+  const thumbnails = formData.getAll("thumbnails") as File[];
+
+  if (files.length === 0) {
+    return { error: "No files uploaded" };
+  }
+
+  const results = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const thumb = thumbnails[i] || file;
+    const timestamp = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+    const fullPath = `orders/${storeId}/${timestamp}_${i}_full_${safeName}`;
+    const thumbPath = `orders/${storeId}/${timestamp}_${i}_thumb_${safeName}`;
+
+    // Upload full-size image
+    const { error: fullErr } = await supabase.storage
+      .from("order-photos")
+      .upload(fullPath, file, { contentType: file.type, upsert: false });
+
+    if (fullErr) {
+      console.error("Full upload error:", fullErr);
+      continue;
+    }
+
+    // Upload thumbnail
+    const { error: thumbErr } = await supabase.storage
+      .from("order-photos")
+      .upload(thumbPath, thumb, { contentType: thumb.type, upsert: false });
+
+    if (thumbErr) {
+      console.error("Thumb upload error:", thumbErr);
+    }
+
+    const {
+      data: { publicUrl: image_url },
+    } = supabase.storage.from("order-photos").getPublicUrl(fullPath);
+
+    const {
+      data: { publicUrl: thumbnail_url },
+    } = supabase.storage.from("order-photos").getPublicUrl(thumbPath);
+
+    // Insert order_item DB record
+    const { data: item, error: dbErr } = await supabase
+      .from("order_items")
+      .insert({
+        store_id: storeId,
+        image_url,
+        thumbnail_url: thumbErr ? image_url : thumbnail_url,
+        status: "PENDING_ORDER" as OrderStatus,
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (!dbErr && item) {
+      results.push(item);
+    }
+  }
+
+  revalidatePath(`/stores/${storeId}`);
+  return { results };
+}
+
 export async function updatePhotoStatus(
   photoId: string,
   newStatus: OrderStatus
@@ -95,17 +172,6 @@ export async function deleteOrderPhoto(photoId: string) {
     return { error: "Unauthorized" };
   }
 
-  // Check admin role
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return { error: "Only admins can delete photos" };
-  }
-
   // Get photo info for storage cleanup
   const { data: photo } = await supabase
     .from("order_items")
@@ -182,13 +248,17 @@ export async function getStatusCounts(storeId: string) {
   const counts = {
     total: data.length,
     PURCHASED: 0,
+    PARTIALLY_PURCHASED: 0,
     PENDING_ORDER: 0,
     DELIVERED: 0,
+    IN_STOCK: 0,
     OUT_OF_STOCK: 0,
   };
 
   for (const item of data) {
-    counts[item.status as OrderStatus]++;
+    if (item.status in counts) {
+      counts[item.status as OrderStatus]++;
+    }
   }
 
   return { data: counts, error: null };

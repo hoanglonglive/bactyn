@@ -6,7 +6,7 @@ import {
 } from "@/app/actions/photo-actions";
 import { StoreDetail } from "@/components/store-detail";
 import { notFound } from "next/navigation";
-import type { OrderItem, Profile, Store } from "@/lib/types";
+import type { OrderItem, OrderStatus, Profile, Store } from "@/lib/types";
 
 export default async function StoreDetailPage({
   params,
@@ -29,17 +29,23 @@ export default async function StoreDetailPage({
 
   const store = storeResult.data as Store;
   const items = (itemsResult.data || []) as OrderItem[];
-  const counts = {
+  const counts: Record<"total" | OrderStatus, number> = {
     total: 0,
     PURCHASED: 0,
+    PARTIALLY_PURCHASED: 0,
     PENDING_ORDER: 0,
     DELIVERED: 0,
+    IN_STOCK: 0,
     OUT_OF_STOCK: 0,
   };
+
   for (const item of items) {
     counts.total++;
-    counts[item.status]++;
+    if (item.status in counts) {
+      counts[item.status]++;
+    }
   }
+
   const profile = profileResult.data as Profile | null;
   const otherStores = allStores.filter((s) => s.id !== id);
 

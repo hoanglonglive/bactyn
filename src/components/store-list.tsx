@@ -310,7 +310,12 @@ function StoreCard({
             <div className="flex items-center gap-1.5 mt-2 flex-wrap">
               {store.purchased_count > 0 && (
                 <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  🟢 {store.purchased_count} đã mua
+                  🟢 {store.purchased_count} đã mua xong
+                </span>
+              )}
+              {store.partially_purchased_count > 0 && (
+                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                  🟠 {store.partially_purchased_count} chưa mua xong
                 </span>
               )}
               {store.pending_count > 0 && (
@@ -321,6 +326,11 @@ function StoreCard({
               {store.delivered_count > 0 && (
                 <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">
                   🔵 {store.delivered_count} đã giao
+                </span>
+              )}
+              {store.in_stock_count > 0 && (
+                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                  📦 {store.in_stock_count} tồn kho
                 </span>
               )}
               {store.out_of_stock_count > 0 && (
@@ -405,6 +415,11 @@ function StoreCard({
                   🟢 {store.purchased_count}
                 </span>
               )}
+              {store.partially_purchased_count > 0 && (
+                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-orange-500/15 text-orange-400 border border-orange-500/20">
+                  🟠 {store.partially_purchased_count}
+                </span>
+              )}
               {store.pending_count > 0 && (
                 <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/20">
                   🟡 {store.pending_count}
@@ -413,6 +428,11 @@ function StoreCard({
               {store.delivered_count > 0 && (
                 <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/20">
                   🔵 {store.delivered_count}
+                </span>
+              )}
+              {store.in_stock_count > 0 && (
+                <span className="text-[9px] font-semibold px-1.5 py-0.3 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/20">
+                  📦 {store.in_stock_count}
                 </span>
               )}
               {store.out_of_stock_count > 0 && (

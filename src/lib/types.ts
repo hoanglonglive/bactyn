@@ -2,8 +2,10 @@ export type UserRole = "admin" | "staff";
 
 export type OrderStatus =
   | "PURCHASED"
+  | "PARTIALLY_PURCHASED"
   | "PENDING_ORDER"
   | "DELIVERED"
+  | "IN_STOCK"
   | "OUT_OF_STOCK";
 
 export interface Profile {
@@ -29,8 +31,10 @@ export interface Store {
 export interface StoreWithCounts extends Store {
   total_items: number;
   purchased_count: number;
+  partially_purchased_count: number;
   pending_count: number;
   delivered_count: number;
+  in_stock_count: number;
   out_of_stock_count: number;
 }
 
@@ -56,11 +60,19 @@ export const STATUS_CONFIG: Record<
 > = {
   PURCHASED: {
     label: "Purchased",
-    labelVi: "Đã mua",
+    labelVi: "Đã mua xong",
     color: "text-emerald-400",
     bgColor: "bg-emerald-500/20 border-emerald-500/30",
     dotColor: "bg-emerald-400",
     emoji: "🟢",
+  },
+  PARTIALLY_PURCHASED: {
+    label: "Partially Purchased",
+    labelVi: "Chưa mua xong",
+    color: "text-orange-400",
+    bgColor: "bg-orange-500/20 border-orange-500/30",
+    dotColor: "bg-orange-400",
+    emoji: "🟠",
   },
   PENDING_ORDER: {
     label: "Pending Order",
@@ -77,6 +89,14 @@ export const STATUS_CONFIG: Record<
     bgColor: "bg-sky-500/20 border-sky-500/30",
     dotColor: "bg-sky-400",
     emoji: "🔵",
+  },
+  IN_STOCK: {
+    label: "In Stock",
+    labelVi: "Tồn kho",
+    color: "text-purple-400",
+    bgColor: "bg-purple-500/20 border-purple-500/30",
+    dotColor: "bg-purple-400",
+    emoji: "📦",
   },
   OUT_OF_STOCK: {
     label: "Out of Stock",

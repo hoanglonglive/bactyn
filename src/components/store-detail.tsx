@@ -12,8 +12,10 @@ import { PhotoDetailModal } from "./photo-detail-modal";
 interface StatusCounts {
   total: number;
   PURCHASED: number;
+  PARTIALLY_PURCHASED: number;
   PENDING_ORDER: number;
   DELIVERED: number;
+  IN_STOCK: number;
   OUT_OF_STOCK: number;
 }
 

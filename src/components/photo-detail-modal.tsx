@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   Trash2,
@@ -15,7 +9,6 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Maximize2,
 } from "lucide-react";
 import type { OrderItem, OrderStatus } from "@/lib/types";
@@ -43,22 +36,12 @@ interface Props {
 
 const STATUSES: OrderStatus[] = [
   "PURCHASED",
+  "PARTIALLY_PURCHASED",
   "PENDING_ORDER",
   "DELIVERED",
+  "IN_STOCK",
   "OUT_OF_STOCK",
 ];
-
-type DragAxis = "horizontal" | "vertical" | null;
-
-interface GestureState {
-  pointerId: number;
-  startX: number;
-  startY: number;
-  lastX: number;
-  lastY: number;
-  startedAt: number;
-  axis: DragAxis;
-}
 
 export function PhotoDetailModal({
   photo,
@@ -87,40 +70,37 @@ export function PhotoDetailModal({
   const [color, setColor] = useState(photo.color || "");
   const [note, setNote] = useState(photo.note || "");
   const [saving, setSaving] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSettling, setIsSettling] = useState(false);
-  const gestureRef = useRef<GestureState | null>(null);
-  const motionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const detailsRef = useRef<HTMLDivElement>(null);
-  const reducedMotionRef = useRef(false);
+
+  // Sync internal states when photo changes without unmounting / flashing
+  useEffect(() => {
+    setCurrentStatus(photo.status);
+    setOrderCode(photo.order_code || "");
+    setCustomerName(photo.customer_name || "");
+    setSize(photo.size || "");
+    setColor(photo.color || "");
+    setNote(photo.note || "");
+  }, [photo]);
 
   // Indexing for prev / next navigation
   const currentIndex = allPhotos.findIndex((p) => p.id === currentPhoto.id);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < allPhotos.length - 1;
 
-  // Warm the browser/CDN cache for adjacent photos while the user reads the
-  // current one. Navigation then usually paints without another visible wait.
+  // Pre-load adjacent images for smooth instant transitions
   useEffect(() => {
-    const adjacent = [allPhotos[currentIndex - 1], allPhotos[currentIndex + 1]];
-    for (const item of adjacent) {
-      if (item) {
-        const preload = new window.Image();
-        preload.src = item.image_url;
+    if (currentIndex >= 0 && allPhotos.length > 0) {
+      const prevItem = allPhotos[currentIndex - 1];
+      const nextItem = allPhotos[currentIndex + 1];
+      if (prevItem) {
+        const img = new window.Image();
+        img.src = prevItem.image_url;
+      }
+      if (nextItem) {
+        const img = new window.Image();
+        img.src = nextItem.image_url;
       }
     }
-  }, [allPhotos, currentIndex]);
-
-  useEffect(() => {
-    reducedMotionRef.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    return () => {
-      if (motionTimerRef.current) clearTimeout(motionTimerRef.current);
-    };
-  }, []);
+  }, [currentIndex, allPhotos]);
 
   const handlePrev = useCallback(() => {
     if (hasPrev && onNavigatePhoto) {
@@ -134,137 +114,16 @@ export function PhotoDetailModal({
     }
   }, [hasNext, currentIndex, allPhotos, onNavigatePhoto]);
 
-  const resetGesture = useCallback(() => {
-    gestureRef.current = null;
-    if (motionTimerRef.current) clearTimeout(motionTimerRef.current);
-    setIsDragging(false);
-    setIsSettling(true);
-    setDragOffset({ x: 0, y: 0 });
-    motionTimerRef.current = setTimeout(() => setIsSettling(false), 180);
-  }, []);
-
-  const requestClose = useCallback(() => {
-    if (isSettling) return;
-    if (reducedMotionRef.current) {
-      onClose();
-      return;
-    }
-    setIsDragging(false);
-    setIsSettling(true);
-    setDragOffset({ x: 0, y: window.innerHeight });
-    motionTimerRef.current = setTimeout(onClose, 180);
-  }, [isSettling, onClose]);
-
-  const navigateWithMotion = useCallback(
-    (direction: "prev" | "next") => {
-      const canNavigate = direction === "prev" ? hasPrev : hasNext;
-      if (!canNavigate || isSettling) {
-        resetGesture();
-        return;
-      }
-      const navigate = direction === "prev" ? handlePrev : handleNext;
-      if (reducedMotionRef.current) {
-        navigate();
-        return;
-      }
-      setIsDragging(false);
-      setIsSettling(true);
-      setDragOffset({
-        x: direction === "next" ? -window.innerWidth : window.innerWidth,
-        y: 0,
-      });
-      motionTimerRef.current = setTimeout(navigate, 170);
-    }, [handleNext, handlePrev, hasNext, hasPrev, isSettling, resetGesture]
-  );
-
-  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (isSettling || event.button !== 0) return;
-    if (
-      (event.target as HTMLElement).closest(
-        "button, a, input, textarea, select"
-      )
-    ) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    gestureRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      lastX: event.clientX,
-      lastY: event.clientY,
-      startedAt: performance.now(),
-      axis: null,
-    };
-    setIsDragging(true);
-  }
-
-  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId) return;
-
-    gesture.lastX = event.clientX;
-    gesture.lastY = event.clientY;
-    const deltaX = event.clientX - gesture.startX;
-    const deltaY = event.clientY - gesture.startY;
-
-    if (!gesture.axis && Math.hypot(deltaX, deltaY) > 8) {
-      gesture.axis = Math.abs(deltaX) > Math.abs(deltaY)
-        ? "horizontal"
-        : "vertical";
-    }
-
-    if (gesture.axis === "horizontal") {
-      const blocked = (deltaX > 0 && !hasPrev) || (deltaX < 0 && !hasNext);
-      setDragOffset({ x: blocked ? deltaX * 0.18 : deltaX, y: 0 });
-    } else if (gesture.axis === "vertical") {
-      setDragOffset({ x: 0, y: deltaY < 0 ? deltaY * 0.16 : deltaY });
-    }
-  }
-
-  function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
-    const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId) return;
-    gestureRef.current = null;
-
-    const deltaX = gesture.lastX - gesture.startX;
-    const deltaY = gesture.lastY - gesture.startY;
-    const elapsed = Math.max(performance.now() - gesture.startedAt, 1);
-
-    if (
-      gesture.axis === "horizontal" &&
-      (Math.abs(deltaX) > 64 || Math.abs(deltaX) / elapsed > 0.55)
-    ) {
-      navigateWithMotion(deltaX < 0 ? "next" : "prev");
-      return;
-    }
-
-    if (
-      gesture.axis === "vertical" &&
-      deltaY > 0 &&
-      (deltaY > 96 || deltaY / elapsed > 0.55)
-    ) {
-      requestClose();
-      return;
-    }
-
-    if (gesture.axis === "vertical" && deltaY < -56) {
-      resetGesture();
-      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-
-    resetGesture();
-  }
-
   // Keyboard navigation
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "ArrowRight") handleNext();
-      if (e.key === "Escape") requestClose();
+      if (e.key === "Escape") onClose();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handlePrev, handleNext, requestClose]);
+  }, [handlePrev, handleNext, onClose]);
 
   async function handleStatusChange(newStatus: OrderStatus) {
     if (newStatus === currentStatus) return;
@@ -316,30 +175,19 @@ export function PhotoDetailModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Xem chi tiết ảnh đơn hàng"
-      className="fixed inset-0 z-50 backdrop-blur-md flex flex-col animate-fade-in select-none"
-      style={{
-        backgroundColor: `rgba(0, 0, 0, ${
-          0.96 - Math.min(Math.max(dragOffset.y, 0) / 900, 0.4)
-        })`,
-      }}
-    >
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col animate-fade-in select-none">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 safe-top">
         <button
-          onClick={requestClose}
-          aria-label="Đóng ảnh"
-          className="w-11 h-11 -ml-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all active:scale-95 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          onClick={onClose}
+          className="p-2 -ml-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all active:scale-95"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Counter */}
         {allPhotos.length > 0 && (
-          <div className="text-xs font-semibold text-white/70 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+          <div className="text-xs font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/10">
             {currentIndex + 1} / {allPhotos.length}
           </div>
         )}
@@ -348,56 +196,33 @@ export function PhotoDetailModal({
           {/* Move Button */}
           <button
             onClick={() => setShowMoveMenu(!showMoveMenu)}
-            aria-expanded={showMoveMenu}
-            className="min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 transition-all active:scale-95 border border-white/10"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 text-xs font-semibold hover:bg-white/20 transition-all active:scale-95 border border-white/10"
           >
             <ArrowRightLeft className="w-3.5 h-3.5" />
             <span>Chuyển</span>
             <ChevronDown className="w-3 h-3 opacity-60" />
           </button>
 
-          {/* Admin Delete */}
-          {isAdmin && (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-medium hover:bg-rose-500/30 transition-all active:scale-95 border border-rose-500/30"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Xóa</span>
-            </button>
-          )}
+          {/* Delete Button (Available for all authenticated users) */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/25 text-rose-300 text-xs font-semibold hover:bg-rose-500/40 transition-all active:scale-95 border border-rose-500/30 shadow-md"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Xóa</span>
+          </button>
         </div>
       </div>
 
       {/* Main Container */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-y-auto lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] lg:overflow-hidden">
-        {/* Image Preview Container with Arrow Controls */}
-        <div
-          className="relative flex items-center justify-center p-2 h-[calc(100dvh-57px)] min-h-[calc(100dvh-57px)] shrink-0 group lg:h-full lg:min-h-0 lg:p-4"
-          style={{
-            touchAction: "none",
-            transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0) scale(${
-              1 - Math.min(Math.max(dragOffset.y, 0) / 1800, 0.045)
-            })`,
-            transition:
-              isDragging && !isSettling
-                ? "none"
-                : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerEnd}
-          onPointerCancel={resetGesture}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) requestClose();
-          }}
-        >
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        {/* Image Preview Container with Arrow Controls (Flicker-Free Instant Transition) */}
+        <div className="relative flex-1 flex items-center justify-center p-2 min-h-[360px] max-h-[55dvh] group">
           {/* Previous Arrow */}
           {hasPrev && (
             <button
-              onClick={() => navigateWithMotion("prev")}
-              aria-label="Ảnh trước"
-              className="absolute left-3 z-10 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              onClick={handlePrev}
+              className="absolute left-3 z-10 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
               title="Ảnh trước (←)"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -407,73 +232,39 @@ export function PhotoDetailModal({
           {/* Next Arrow */}
           {hasNext && (
             <button
-              onClick={() => navigateWithMotion("next")}
-              aria-label="Ảnh tiếp theo"
-              className="absolute right-3 z-10 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              onClick={handleNext}
+              className="absolute right-3 z-10 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
               title="Ảnh sau (→)"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
 
+          {/* Flicker-Free Main Image */}
           <img
-            src={currentPhoto.thumbnail_url}
-            alt=""
-            aria-hidden="true"
-            className={`absolute inset-2 w-[calc(100%-1rem)] h-[calc(100%-1rem)] rounded-2xl object-contain blur-[2px] transition-opacity duration-150 lg:inset-4 lg:w-[calc(100%-2rem)] lg:h-[calc(100%-2rem)] ${
-              imageLoaded ? "opacity-0" : "opacity-100"
-            }`}
-          />
-          <img
-            key={currentPhoto.image_url}
-            src={currentPhoto.image_url}
+            key={currentPhoto.id}
+            src={currentPhoto.image_url || currentPhoto.thumbnail_url}
             alt={currentPhoto.order_code || "Order photo"}
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            draggable={false}
-            onLoad={() => setImageLoaded(true)}
-            className={`relative w-full h-full max-w-full max-h-full rounded-2xl object-contain shadow-2xl transition-opacity duration-150 ${
-              imageLoaded ? "opacity-100" : "opacity-0"
-            }`}
+            className="w-full h-full rounded-2xl object-contain shadow-2xl"
           />
 
           <a
             href={currentPhoto.image_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute z-10 bottom-4 right-4 p-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 text-white/70 hover:text-white transition-all active:scale-95"
+            className="absolute z-10 bottom-4 right-4 p-2.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 text-white/80 hover:text-white transition-all active:scale-95 shadow-lg"
             title="Xem ảnh gốc"
           >
             <Maximize2 className="w-4 h-4" />
           </a>
-
-          <button
-            type="button"
-            onClick={() =>
-              detailsRef.current?.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-              })
-            }
-            className="absolute z-10 bottom-4 left-1/2 -translate-x-1/2 min-h-11 px-4 rounded-full bg-black/65 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/80 flex items-center gap-1.5 shadow-xl lg:hidden"
-            aria-label="Mở chi tiết đơn hàng"
-          >
-            <ChevronUp className="w-4 h-4" />
-            Vuốt lên · Chi tiết
-          </button>
         </div>
 
-        <div
-          ref={detailsRef}
-          className="scroll-mt-2 lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-white/10"
-        >
-        {/* Status Selector Bar (1-Click Instant Upgrade) */}
-        <div className="px-4 py-3 bg-surface/50 border-y border-white/10 lg:border-t-0">
-          <p className="text-[11px] font-semibold text-white/40 mb-2 uppercase tracking-wider">
+        {/* Status Selector Bar (All 6 Statuses) */}
+        <div className="px-4 py-3 bg-surface/60 border-y border-white/10">
+          <p className="text-[11px] font-bold text-white/40 mb-2 uppercase tracking-wider">
             Trạng thái đơn hàng
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
             {STATUSES.map((status) => {
               const config = STATUS_CONFIG[status];
               const isActive = currentStatus === status;
@@ -483,18 +274,15 @@ export function PhotoDetailModal({
                   key={status}
                   onClick={() => handleStatusChange(status)}
                   className={cn(
-                    "min-h-11 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 shadow-md",
+                    "flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-md",
                     isActive
-                      ? config.bgColor + " " + config.color + " border-white/30 shadow-indigo-500/20 ring-2 ring-indigo-500/30"
-                      : "border-border-subtle bg-surface-overlay/60 text-white/40 hover:text-white/70 hover:bg-surface-overlay",
+                      ? config.bgColor + " " + config.color + " border-white/30 shadow-indigo-500/20 ring-2 ring-indigo-500/40"
+                      : "border-border-subtle bg-surface-overlay/60 text-white/50 hover:text-white/80 hover:bg-surface-overlay",
                     statusAnimating === status && "animate-bounce"
                   )}
                 >
-                  <span
-                    aria-hidden="true"
-                    className={`w-2.5 h-2.5 rounded-full ${config.dotColor}`}
-                  />
-                  <span>{config.labelVi}</span>
+                  <span className="text-base">{config.emoji}</span>
+                  <span className="truncate">{config.labelVi}</span>
                 </button>
               );
             })}
@@ -503,13 +291,13 @@ export function PhotoDetailModal({
 
         {/* Fast Editable Details with Auto-Save on Blur */}
         <div className="p-4 space-y-3 max-w-lg mx-auto w-full">
-          <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
+          <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
             Chi tiết thông tin đơn
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-medium text-white/50 mb-1 block">
+              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
                 Mã đơn hàng
               </label>
               <input
@@ -522,7 +310,7 @@ export function PhotoDetailModal({
             </div>
 
             <div>
-              <label className="text-[10px] font-medium text-white/50 mb-1 block">
+              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
                 Tên khách hàng
               </label>
               <input
@@ -535,7 +323,7 @@ export function PhotoDetailModal({
             </div>
 
             <div>
-              <label className="text-[10px] font-medium text-white/50 mb-1 block">
+              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
                 Kích thước (Size)
               </label>
               <input
@@ -548,7 +336,7 @@ export function PhotoDetailModal({
             </div>
 
             <div>
-              <label className="text-[10px] font-medium text-white/50 mb-1 block">
+              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
                 Màu sắc
               </label>
               <input
@@ -562,7 +350,7 @@ export function PhotoDetailModal({
           </div>
 
           <div>
-            <label className="text-[10px] font-medium text-white/50 mb-1 block">
+            <label className="text-[10px] font-semibold text-white/50 mb-1 block">
               Ghi chú thêm
             </label>
             <textarea
@@ -581,7 +369,6 @@ export function PhotoDetailModal({
               Đang tự động lưu...
             </p>
           )}
-        </div>
         </div>
       </div>
 
@@ -624,13 +411,13 @@ export function PhotoDetailModal({
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-60 flex items-center justify-center px-6">
           <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/75 backdrop-blur-sm"
             onClick={() => setShowDeleteConfirm(false)}
           />
           <div className="relative w-full max-w-xs rounded-2xl bg-surface-elevated border border-border-subtle p-5 text-center shadow-2xl animate-fade-in">
             <p className="text-base font-bold text-white mb-1.5">Xóa ảnh đơn này?</p>
             <p className="text-xs text-white/50 mb-5">
-              Hành động này không thể hoàn tác. Ảnh sẽ bị xóa vĩnh viễn.
+              Hành động này không thể hoàn tác. Ảnh sẽ bị xóa vĩnh viễn khỏi hệ thống.
             </p>
             <div className="flex gap-3">
               <button
@@ -642,7 +429,7 @@ export function PhotoDetailModal({
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Xóa ngay
