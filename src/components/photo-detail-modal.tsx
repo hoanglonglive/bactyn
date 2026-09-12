@@ -72,7 +72,7 @@ export function PhotoDetailModal({
   const [moving, setMoving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusAnimating, setStatusAnimating] = useState<OrderStatus | null>(null);
-  const [expandedImage, setExpandedImage] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(true);
 
   // Editable fields
   const [orderCode, setOrderCode] = useState(photo.order_code || "");
@@ -81,16 +81,6 @@ export function PhotoDetailModal({
   const [color, setColor] = useState(photo.color || "");
   const [note, setNote] = useState(photo.note || "");
   const [saving, setSaving] = useState(false);
-
-  // Sync internal states when photo changes without unmounting / flashing
-  useEffect(() => {
-    setCurrentStatus(photo.status);
-    setOrderCode(photo.order_code || "");
-    setCustomerName(photo.customer_name || "");
-    setSize(photo.size || "");
-    setColor(photo.color || "");
-    setNote(photo.note || "");
-  }, [photo]);
 
   // Indexing for prev / next navigation
   const currentIndex = allPhotos.findIndex((p) => p.id === currentPhoto.id);
@@ -136,7 +126,7 @@ export function PhotoDetailModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handlePrev, handleNext, onClose]);
 
-  // Mobile Touch Swipe Gesture Handler (Left/Right to Navigate, Up/Down to Close)
+  // Mobile gestures: left/right navigates; only a deliberate downward swipe closes.
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -171,8 +161,8 @@ export function PhotoDetailModal({
       } else if (deltaX > 0 && hasPrev) {
         handlePrev(); // Swipe Right -> Prev Photo
       }
-    } else if (deltaY < -minVerticalSwipe && absY > absX * 1.5) {
-      // Swipe UP (from bottom to top) -> Close modal back to store list
+    } else if (deltaY > minVerticalSwipe && absY > absX * 1.5) {
+      // Swipe DOWN -> Close modal back to the photo list.
       onClose();
     }
 
@@ -306,7 +296,9 @@ export function PhotoDetailModal({
           onTouchEnd={handleTouchEnd}
           className={cn(
             "relative flex-1 flex items-center justify-center p-2 group transition-all duration-300 select-none",
-            expandedImage ? "min-h-[80dvh] max-h-[88dvh]" : "min-h-[480px] max-h-[72dvh]"
+            expandedImage
+              ? "h-[calc(100dvh-68px)] min-h-[calc(100dvh-68px)] shrink-0"
+              : "min-h-[480px] max-h-[72dvh]"
           )}
         >
           {/* Previous Arrow */}
