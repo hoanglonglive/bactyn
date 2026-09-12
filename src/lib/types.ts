@@ -6,7 +6,8 @@ export type OrderStatus =
   | "PENDING_ORDER"
   | "DELIVERED"
   | "IN_STOCK"
-  | "OUT_OF_STOCK";
+  | "OUT_OF_STOCK"
+  | "PAID_NOT_RECEIVED";
 
 export interface Profile {
   id: string;
@@ -37,6 +38,7 @@ export interface StoreWithCounts extends Store {
   delivered_count: number;
   in_stock_count: number;
   out_of_stock_count: number;
+  paid_not_received_count: number;
 }
 
 export interface OrderItem {
@@ -107,5 +109,13 @@ export const STATUS_CONFIG: Record<
     bgColor: "bg-rose-500/20 border-rose-500/30",
     dotColor: "bg-rose-400",
     emoji: "🔴",
+  },
+  PAID_NOT_RECEIVED: {
+    label: "Paid - Not Received",
+    labelVi: "Đã thanh toán - Chưa nhận",
+    color: "text-indigo-400",
+    bgColor: "bg-indigo-500/20 border-indigo-500/30",
+    dotColor: "bg-indigo-400",
+    emoji: "💳",
   },
 };

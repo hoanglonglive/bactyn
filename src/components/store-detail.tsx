@@ -40,6 +40,7 @@ interface StatusCounts {
   DELIVERED: number;
   IN_STOCK: number;
   OUT_OF_STOCK: number;
+  PAID_NOT_RECEIVED: number;
 }
 
 interface Props {
@@ -454,8 +455,8 @@ export function StoreDetail({
                     Đổi trạng thái ({selectedIds.size} ảnh)
                   </p>
                   {(isAdmin
-                    ? (["PURCHASED", "PARTIALLY_PURCHASED", "PENDING_ORDER", "DELIVERED", "IN_STOCK", "OUT_OF_STOCK"] as OrderStatus[])
-                    : (["DELIVERED", "IN_STOCK", "PARTIALLY_PURCHASED"] as OrderStatus[])
+                    ? (["PURCHASED", "PARTIALLY_PURCHASED", "PENDING_ORDER", "DELIVERED", "IN_STOCK", "OUT_OF_STOCK", "PAID_NOT_RECEIVED"] as OrderStatus[])
+                    : (["DELIVERED", "IN_STOCK", "PARTIALLY_PURCHASED", "PAID_NOT_RECEIVED"] as OrderStatus[])
                   ).map((st) => {
                     const cfg = STATUS_CONFIG[st];
                     return (

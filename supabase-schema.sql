@@ -17,10 +17,13 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
         CREATE TYPE public.order_status AS ENUM (
-            'PURCHASED',       -- 🟢 Hàng đã mua được
-            'PENDING_ORDER',   -- 🟡 Đang chờ order
-            'DELIVERED',       -- 🔵 Đã chuyển cho khách hàng
-            'OUT_OF_STOCK'     -- 🔴 Không mua được hàng / Hết hàng
+            'PURCHASED',          -- 🟢 Hàng đã mua được
+            'PARTIALLY_PURCHASED',-- 🟠 Chưa mua xong
+            'PENDING_ORDER',      -- 🟡 Đang chờ order
+            'DELIVERED',          -- 🔵 Đã chuyển cho khách hàng
+            'IN_STOCK',           -- 📦 Tồn kho
+            'OUT_OF_STOCK',       -- 🔴 Không mua được hàng / Hết hàng
+            'PAID_NOT_RECEIVED'   -- 💳 Đã thanh toán - Chưa nhận hàng
         );
     END IF;
 END
@@ -217,10 +220,13 @@ SELECT
     s.updated_at,
     s.created_by,
     COUNT(oi.id)::INT AS total_items,
-    COUNT(oi.id) FILTER (WHERE oi.status = 'PURCHASED')::INT      AS purchased_count,
-    COUNT(oi.id) FILTER (WHERE oi.status = 'PENDING_ORDER')::INT   AS pending_count,
-    COUNT(oi.id) FILTER (WHERE oi.status = 'DELIVERED')::INT       AS delivered_count,
-    COUNT(oi.id) FILTER (WHERE oi.status = 'OUT_OF_STOCK')::INT    AS out_of_stock_count
+    COUNT(oi.id) FILTER (WHERE oi.status = 'PURCHASED')::INT          AS purchased_count,
+    COUNT(oi.id) FILTER (WHERE oi.status = 'PARTIALLY_PURCHASED')::INT AS partially_purchased_count,
+    COUNT(oi.id) FILTER (WHERE oi.status = 'PENDING_ORDER')::INT       AS pending_count,
+    COUNT(oi.id) FILTER (WHERE oi.status = 'DELIVERED')::INT           AS delivered_count,
+    COUNT(oi.id) FILTER (WHERE oi.status = 'IN_STOCK')::INT            AS in_stock_count,
+    COUNT(oi.id) FILTER (WHERE oi.status = 'OUT_OF_STOCK')::INT        AS out_of_stock_count,
+    COUNT(oi.id) FILTER (WHERE oi.status = 'PAID_NOT_RECEIVED')::INT   AS paid_not_received_count
 FROM public.stores s
 LEFT JOIN public.order_items oi ON oi.store_id = s.id
 GROUP BY s.id;

@@ -12,6 +12,7 @@ interface StatusCounts {
   DELIVERED: number;
   IN_STOCK: number;
   OUT_OF_STOCK: number;
+  PAID_NOT_RECEIVED: number;
 }
 
 interface Props {
@@ -28,6 +29,7 @@ const FILTERS: { key: OrderStatus | null; label: string; emoji?: string }[] = [
   { key: "DELIVERED", label: "Đã giao", emoji: "🔵" },
   { key: "IN_STOCK", label: "Tồn kho", emoji: "📦" },
   { key: "OUT_OF_STOCK", label: "Hết hàng", emoji: "🔴" },
+  { key: "PAID_NOT_RECEIVED", label: "Đã thanh toán - Chưa nhận", emoji: "💳" },
 ];
 
 export function StatusFilter({ counts, activeFilter, onFilterChange }: Props) {

@@ -318,6 +318,7 @@ export async function bulkUpdatePhotoStatus(
     "DELIVERED",
     "IN_STOCK",
     "PARTIALLY_PURCHASED",
+    "PAID_NOT_RECEIVED",
   ];
 
   // Check staff role permissions
@@ -430,6 +431,7 @@ export async function getStatusCounts(storeId: string) {
     DELIVERED: 0,
     IN_STOCK: 0,
     OUT_OF_STOCK: 0,
+    PAID_NOT_RECEIVED: 0,
   };
 
   for (const item of data) {

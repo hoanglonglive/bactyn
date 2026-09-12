@@ -45,12 +45,14 @@ const ALL_STATUSES: OrderStatus[] = [
   "DELIVERED",
   "IN_STOCK",
   "OUT_OF_STOCK",
+  "PAID_NOT_RECEIVED",
 ];
 
 const STAFF_ALLOWED_STATUSES: OrderStatus[] = [
   "DELIVERED",
   "IN_STOCK",
   "PARTIALLY_PURCHASED",
+  "PAID_NOT_RECEIVED",
 ];
 
 export function PhotoDetailModal({

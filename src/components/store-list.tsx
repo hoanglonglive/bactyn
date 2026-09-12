@@ -151,6 +151,7 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
       DELIVERED: 0,
       IN_STOCK: 0,
       OUT_OF_STOCK: 0,
+      PAID_NOT_RECEIVED: 0,
     };
     for (const item of allItems) {
       if (item.status in counts) {
@@ -615,6 +616,7 @@ function StoreStatusBreakdown({ store }: { store: StoreWithCounts }) {
     { key: "delivered", label: "Đã giao", emoji: "🔵", color: "text-sky-300 bg-sky-500/15 border-sky-500/30", count: store.delivered_count || 0 },
     { key: "in_stock", label: "Tồn kho", emoji: "📦", color: "text-purple-300 bg-purple-500/15 border-purple-500/30", count: store.in_stock_count || 0 },
     { key: "out_of_stock", label: "Hết hàng", emoji: "🔴", color: "text-rose-300 bg-rose-500/15 border-rose-500/30", count: store.out_of_stock_count || 0 },
+    { key: "paid_not_received", label: "Đã thanh toán - Chưa nhận", emoji: "💳", color: "text-indigo-300 bg-indigo-500/15 border-indigo-500/30", count: store.paid_not_received_count || 0 },
   ].filter((st) => st.count > 0);
 
   if (store.total_items === 0 || items.length === 0) {

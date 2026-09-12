@@ -43,6 +43,7 @@ export default async function StoreDetailPage({
     DELIVERED: 0,
     IN_STOCK: 0,
     OUT_OF_STOCK: 0,
+    PAID_NOT_RECEIVED: 0,
   };
 
   for (const item of items) {
