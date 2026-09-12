@@ -24,7 +24,7 @@ export function PhotoGrid({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-3xl glass-panel">
-        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-xl">
+        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 shadow-xl">
           <ImageIcon className="w-8 h-8 text-white/20" />
         </div>
         <p className="text-white/70 font-bold text-sm">Chưa có ảnh đơn hàng nào</p>
@@ -57,8 +57,8 @@ export function PhotoGrid({
                 }
                 className={`w-full flex items-center gap-3.5 p-3 rounded-3xl glass-card text-left transition-all active:scale-[0.99] group ${
                   isSelected
-                    ? "border-indigo-400 bg-indigo-500/15 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20"
-                    : "hover:border-white/20 hover:bg-white/[0.08]"
+                    ? "bg-amber-400/15 ring-2 ring-amber-400 shadow-lg shadow-amber-500/20"
+                    : "hover:bg-white/[0.08]"
                 }`}
               >
                 {/* Checkbox Icon when selectMode */}
@@ -66,8 +66,8 @@ export function PhotoGrid({
                   <div
                     className={`w-6 h-6 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
                       isSelected
-                        ? "bg-indigo-600 text-white shadow-md"
-                        : "border-2 border-white/30 bg-black/40"
+                        ? "bg-amber-400 text-black font-bold shadow-md"
+                        : "bg-black/50"
                     }`}
                   >
                     {isSelected && <Check className="w-4 h-4" />}
@@ -75,7 +75,7 @@ export function PhotoGrid({
                 )}
 
                 {/* Thumbnail */}
-                <div className="relative w-16 h-20 rounded-2xl overflow-hidden bg-black/40 border border-white/15 flex-shrink-0 shadow-md">
+                <div className="relative w-16 h-20 rounded-2xl overflow-hidden bg-black/50 flex-shrink-0 shadow-md">
                   <img
                     src={displayImg}
                     alt={item.order_code || "Order photo"}
@@ -83,7 +83,7 @@ export function PhotoGrid({
                     loading={i < 8 ? "eager" : "lazy"}
                     decoding="async"
                   />
-                  <div className="absolute top-1 left-1 bg-black/75 backdrop-blur-md px-1.5 py-0.5 rounded-full text-[9px] border border-white/10">
+                  <div className="absolute top-1 left-1 bg-black/80 backdrop-blur-md px-1.5 py-0.5 rounded-full text-[9px]">
                     {statusConfig.emoji}
                   </div>
                 </div>
@@ -92,17 +92,17 @@ export function PhotoGrid({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0 truncate">
-                      <p className="text-xs font-extrabold text-white truncate">
+                      <p className="text-xs font-black text-white truncate">
                         {item.order_code ? `#${item.order_code}` : "Đơn hàng mới"}
                       </p>
                       {item.store_name && (
-                        <span className="text-[9px] font-extrabold bg-indigo-500/20 text-indigo-200 border border-indigo-500/35 px-2 py-0.5 rounded-lg flex-shrink-0 backdrop-blur-md shadow-sm">
+                        <span className="text-[9px] font-extrabold bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-lg flex-shrink-0 backdrop-blur-md shadow-sm">
                           🏪 {item.store_name}
                         </span>
                       )}
                     </div>
                     <span
-                      className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full border flex-shrink-0 backdrop-blur-md shadow-sm ${statusConfig.bgColor} ${statusConfig.color}`}
+                      className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full border-none flex-shrink-0 backdrop-blur-md shadow-sm ${statusConfig.bgColor} ${statusConfig.color}`}
                     >
                       {statusConfig.labelVi}
                     </span>
@@ -114,12 +114,12 @@ export function PhotoGrid({
 
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                     {item.size && (
-                      <span className="text-[9px] font-bold bg-white/10 px-2 py-0.5 rounded-md text-white/90 border border-white/10">
+                      <span className="text-[9px] font-bold bg-white/10 px-2 py-0.5 rounded-md text-white/90">
                         Size: {item.size}
                       </span>
                     )}
                     {item.color && (
-                      <span className="text-[9px] font-bold bg-white/10 px-2 py-0.5 rounded-md text-white/90 border border-white/10">
+                      <span className="text-[9px] font-bold bg-white/10 px-2 py-0.5 rounded-md text-white/90">
                         Màu: {item.color}
                       </span>
                     )}
@@ -159,10 +159,10 @@ export function PhotoGrid({
                   : onPhotoClick(item)
               }
               aria-label={`Mở ảnh ${item.order_code || "đơn hàng"}`}
-              className={`group relative w-full cursor-pointer rounded-3xl overflow-hidden glass-card block text-left transition-all duration-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80 ${
+              className={`group relative w-full cursor-pointer rounded-3xl overflow-hidden glass-card block text-left transition-all duration-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
                 isSelected
-                  ? "border-indigo-400 ring-2 ring-indigo-500/60 shadow-lg shadow-indigo-500/25"
-                  : "hover:border-white/20 hover:bg-white/[0.08]"
+                  ? "bg-amber-400/15 ring-2 ring-amber-400 shadow-lg shadow-amber-500/25"
+                  : "hover:bg-white/[0.08]"
               }`}
             >
               {/* Photo Image Aspect Container */}
@@ -180,8 +180,8 @@ export function PhotoGrid({
                   <div
                     className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-xl flex items-center justify-center transition-all z-10 ${
                       isSelected
-                        ? "bg-indigo-600 text-white shadow-lg scale-105"
-                        : "border-2 border-white/40 bg-black/50 backdrop-blur-md"
+                        ? "bg-amber-400 text-black font-bold shadow-lg scale-105"
+                        : "bg-black/60 backdrop-blur-md"
                     }`}
                   >
                     {isSelected && <Check className="w-4 h-4" />}
@@ -190,7 +190,7 @@ export function PhotoGrid({
               </div>
 
               {/* Status Badge Tag */}
-              <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 shadow-lg">
+              <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full shadow-lg">
                 <span
                   aria-hidden="true"
                   className={`w-2 h-2 rounded-full ${statusConfig.dotColor} shadow-sm`}
@@ -202,7 +202,7 @@ export function PhotoGrid({
 
               {/* Store Name Badge Tag */}
               {item.store_name && !selectMode && (
-                <div className="absolute top-2.5 right-2.5 bg-indigo-950/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-indigo-400/35 text-[9px] font-extrabold text-indigo-200 shadow-lg truncate max-w-[110px]">
+                <div className="absolute top-2.5 right-2.5 bg-black/80 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[9px] font-extrabold text-amber-300 shadow-lg truncate max-w-[110px]">
                   🏪 {item.store_name}
                 </div>
               )}
@@ -243,4 +243,5 @@ export function PhotoGrid({
     </div>
   );
 }
+
 

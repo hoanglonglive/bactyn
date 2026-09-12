@@ -158,13 +158,13 @@ export function AdminUserModal({
         onClick={onClose}
       />
 
-      {/* Modal Window */}
-      <div className="relative w-full max-w-lg max-h-[85dvh] rounded-3xl glass-modal flex flex-col animate-fade-in">
+      {/* Modal Window (Borderless) */}
+      <div className="relative w-full max-w-lg max-h-[85dvh] rounded-3xl glass-modal flex flex-col animate-fade-in border-none shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/10">
+        <div className="flex items-center justify-between px-6 py-4.5 border-none">
           <div>
-            <h2 className="text-base font-extrabold text-white flex items-center gap-2 drop-shadow-sm">
-              <Users className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-base font-black text-white flex items-center gap-2 drop-shadow-sm">
+              <Users className="w-5 h-5 text-amber-400" />
               Quản lý tài khoản người dùng
             </h2>
             <p className="text-[11px] font-medium text-white/50 mt-0.5">
@@ -173,7 +173,7 @@ export function AdminUserModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all active:scale-95 border border-white/10"
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>
@@ -181,13 +181,13 @@ export function AdminUserModal({
 
         {/* Alerts */}
         {errorMsg && (
-          <div className="mx-6 mt-3.5 px-4 py-2.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-xs font-bold text-rose-300 flex items-center gap-2 backdrop-blur-md">
+          <div className="mx-6 mt-3.5 px-4 py-2.5 rounded-2xl bg-rose-500/20 text-xs font-bold text-rose-300 flex items-center gap-2 backdrop-blur-md">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
         {successMsg && (
-          <div className="mx-6 mt-3.5 px-4 py-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-2 backdrop-blur-md">
+          <div className="mx-6 mt-3.5 px-4 py-2.5 rounded-2xl bg-emerald-500/20 text-xs font-bold text-emerald-300 flex items-center gap-2 backdrop-blur-md">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             <span>{successMsg}</span>
           </div>
@@ -201,7 +201,7 @@ export function AdminUserModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo email hoặc họ tên..."
-              className="w-full pl-11 pr-10 py-3 rounded-2xl glass-input text-xs text-white placeholder-white/30 focus:outline-none transition-all shadow-inner"
+              className="w-full pl-11 pr-10 py-3 rounded-2xl glass-input text-xs text-white placeholder-white/30 focus:outline-none transition-all shadow-inner border-none"
             />
             {searchQuery && (
               <button
@@ -218,13 +218,13 @@ export function AdminUserModal({
             <button
               onClick={() => setShowPurgeConfirm(true)}
               disabled={purging}
-              className="py-3 px-3 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-extrabold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-rose-500/15 backdrop-blur-md"
+              className="py-3 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-lg backdrop-blur-md"
               title="Xóa ngay lập tức tất cả ảnh đơn hàng đã giao để giải phóng bộ nhớ server & cache điện thoại"
             >
               {purging ? (
-                <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
               ) : (
-                <Trash2 className="w-4 h-4 text-rose-400" />
+                <Trash2 className="w-4 h-4 text-white" />
               )}
               <span>Xóa ảnh ĐÃ GIAO ngay</span>
             </button>
@@ -232,13 +232,13 @@ export function AdminUserModal({
             <button
               onClick={handleManualCleanup}
               disabled={cleaning}
-              className="py-3 px-3 rounded-2xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/35 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-md backdrop-blur-md"
+              className="py-3 px-3 rounded-2xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 text-xs font-extrabold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-md backdrop-blur-md"
               title="Quét và xóa ảnh đã giao hoặc hết hàng quá 14 ngày để giải phóng bộ nhớ"
             >
               {cleaning ? (
-                <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
               ) : (
-                <Trash2 className="w-4 h-4 text-indigo-400" />
+                <Trash2 className="w-4 h-4 text-amber-400" />
               )}
               <span>Dọn ảnh cũ (&gt;14 ngày)</span>
             </button>

@@ -259,13 +259,13 @@ export function StoreDetail({
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-extrabold text-white truncate drop-shadow-sm">
+              <h1 className="text-base font-black text-white truncate drop-shadow-sm">
                 {store.name}
               </h1>
               <p className="text-[10px] font-medium text-white/50 flex items-center gap-1.5">
                 <span>Hiển thị {filteredItems.length} / {items.length} ảnh đơn</span>
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-0.5 text-amber-300 font-bold bg-amber-400/15 px-2 py-0.5 rounded-full border border-amber-400/35 shadow-inner">
+                  <span className="inline-flex items-center gap-0.5 text-amber-300 font-extrabold bg-amber-400/20 px-2 py-0.5 rounded-full shadow-inner">
                     <ShieldCheck className="w-3 h-3" />
                     Admin
                   </span>
@@ -301,7 +301,7 @@ export function StoreDetail({
               onClick={() => setViewMode("grid")}
               className={`p-2 rounded-xl transition-all ${
                 viewMode === "grid"
-                  ? "bg-indigo-600 text-white shadow-md border border-indigo-400/30"
+                  ? "bg-amber-400 text-black font-extrabold shadow-md"
                   : "text-white/40 hover:text-white/80"
               }`}
               title="Xem dạng lưới"
@@ -312,7 +312,7 @@ export function StoreDetail({
               onClick={() => setViewMode("list")}
               className={`p-2 rounded-xl transition-all ${
                 viewMode === "list"
-                  ? "bg-indigo-600 text-white shadow-md border border-indigo-400/30"
+                  ? "bg-amber-400 text-black font-extrabold shadow-md"
                   : "text-white/40 hover:text-white/80"
               }`}
               title="Xem dạng danh sách"
@@ -327,10 +327,10 @@ export function StoreDetail({
               setSelectMode(!selectMode);
               if (selectMode) setSelectedIds(new Set());
             }}
-            className={`px-3 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0 ${
+            className={`px-3 py-2 rounded-2xl text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0 ${
               selectMode
-                ? "bg-indigo-600 text-white border border-indigo-400/40 shadow-lg shadow-indigo-600/35"
-                : "glass-panel text-white/70 hover:text-white hover:border-white/20"
+                ? "bg-amber-400 text-black shadow-lg shadow-amber-500/30"
+                : "glass-panel text-white/70 hover:text-white"
             }`}
             title="Bật/Tắt chọn nhiều ảnh đơn hàng"
           >
@@ -363,10 +363,10 @@ export function StoreDetail({
       {isAdmin && (
         <button
           onClick={() => setShowUpload(true)}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-violet-600 shadow-xl shadow-indigo-500/30 flex items-center justify-center hover:shadow-indigo-500/50 active:scale-90 transition-all border border-white/20"
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-2xl btn-gold shadow-xl flex items-center justify-center active:scale-90 transition-all text-black"
           title="Tải ảnh đơn hàng"
         >
-          <Camera className="w-6 h-6 text-white" />
+          <Camera className="w-6 h-6 text-black" />
         </button>
       )}
 
@@ -396,20 +396,20 @@ export function StoreDetail({
         />
       )}
 
-      {/* Floating Bottom Bulk Action Bar for Order Photos */}
+      {/* Floating Bottom Bulk Action Bar for Order Photos (Borderless) */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass border border-white/20 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3 animate-fade-in max-w-xl w-[94%] justify-between">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-modal rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3 animate-fade-in max-w-xl w-[94%] justify-between border-none">
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-md">
+            <span className="w-7 h-7 rounded-full bg-amber-400 text-black font-black text-xs flex items-center justify-center shadow-md">
               {selectedIds.size}
             </span>
-            <span className="text-xs font-bold text-white hidden xs:inline">Đã chọn</span>
+            <span className="text-xs font-black text-white hidden xs:inline">Đã chọn</span>
           </div>
 
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
             <button
               onClick={handleSelectAll}
-              className="text-[11px] font-semibold text-white/70 hover:text-white px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all border border-white/10"
+              className="text-[11px] font-bold text-white/70 hover:text-white px-2.5 py-1.5 rounded-xl bg-white/10 transition-all"
             >
               {selectedIds.size === filteredItems.length ? "Bỏ chọn" : "Tất cả"}
             </button>
@@ -418,17 +418,17 @@ export function StoreDetail({
             <div className="relative">
               <button
                 onClick={() => setShowBulkStatusMenu(!showBulkStatusMenu)}
-                className="px-2.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-semibold flex items-center gap-1 border border-indigo-500/30 transition-all active:scale-95 shadow-sm"
+                className="px-3 py-1.5 rounded-xl bg-amber-400/20 text-amber-300 text-xs font-extrabold flex items-center gap-1 transition-all active:scale-95 shadow-sm"
               >
-                <Tag className="w-3.5 h-3.5" />
+                <Tag className="w-3.5 h-3.5 text-amber-400" />
                 <span>Trạng thái</span>
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
 
-              {/* Status Selector Popover */}
+              {/* Status Selector Popover (Borderless) */}
               {showBulkStatusMenu && (
-                <div className="absolute bottom-full mb-2 right-0 w-48 rounded-2xl bg-surface-elevated border border-border-subtle p-1.5 shadow-2xl z-60 animate-fade-in space-y-1">
-                  <p className="text-[10px] font-bold text-white/40 px-2 py-1 uppercase tracking-wider">
+                <div className="absolute bottom-full mb-2 right-0 w-48 rounded-2xl glass-modal p-2 shadow-2xl z-60 animate-fade-in space-y-1 border-none">
+                  <p className="text-[10px] font-black text-white/50 px-2.5 py-1 uppercase tracking-wider">
                     Đổi trạng thái ({selectedIds.size} ảnh)
                   </p>
                   {(isAdmin
@@ -441,9 +441,9 @@ export function StoreDetail({
                         key={st}
                         onClick={() => handleBulkStatusChange(st)}
                         disabled={bulkProcessing}
-                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-white/10 text-left text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-white/10 text-left text-xs font-extrabold text-white transition-colors disabled:opacity-50"
                       >
-                        <span className={`w-2 h-2 rounded-full ${cfg.dotColor}`} />
+                        <span className={`w-2.5 h-2.5 rounded-full ${cfg.dotColor}`} />
                         <span>{cfg.labelVi}</span>
                       </button>
                     );
@@ -456,7 +456,7 @@ export function StoreDetail({
             {isAdmin && otherStores.length > 0 && (
               <button
                 onClick={() => setShowBulkMoveModal(true)}
-                className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 text-xs font-semibold flex items-center gap-1 border border-white/15 transition-all active:scale-95 shadow-sm"
+                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1 transition-all active:scale-95 shadow-sm"
               >
                 <ArrowRightLeft className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Chuyển</span>
@@ -467,7 +467,7 @@ export function StoreDetail({
             {isAdmin && (
               <button
                 onClick={() => setShowBulkDeleteModal(true)}
-                className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 flex items-center gap-1 transition-all active:scale-95"
+                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg flex items-center gap-1 transition-all active:scale-95"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Xóa</span>
@@ -477,19 +477,19 @@ export function StoreDetail({
         </div>
       )}
 
-      {/* Bulk Move Modal */}
+      {/* Bulk Move Modal (Borderless) */}
       {showBulkMoveModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/85 backdrop-blur-md"
             onClick={() => setShowBulkMoveModal(false)}
           />
-          <div className="relative w-full max-w-sm rounded-3xl bg-surface-elevated border border-border-subtle p-5 shadow-2xl animate-fade-in">
-            <h3 className="text-base font-extrabold text-white mb-1 flex items-center gap-2">
-              <ArrowRightLeft className="w-5 h-5 text-indigo-400" />
+          <div className="relative w-full max-w-sm rounded-3xl glass-modal p-6 shadow-2xl animate-fade-in border-none">
+            <h3 className="text-base font-black text-white mb-1 flex items-center gap-2">
+              <ArrowRightLeft className="w-5 h-5 text-amber-400" />
               Chuyển {selectedIds.size} ảnh đơn hàng
             </h3>
-            <p className="text-xs text-white/50 mb-4">
+            <p className="text-xs text-white/60 mb-4">
               Chọn gian hàng bạn muốn chuyển các ảnh đơn đã chọn sang:
             </p>
             <div className="space-y-1.5 max-h-60 overflow-y-auto mb-4 pr-1">
@@ -498,10 +498,10 @@ export function StoreDetail({
                   key={s.id}
                   onClick={() => handleBulkMove(s.id)}
                   disabled={bulkProcessing}
-                  className="w-full p-3 rounded-2xl bg-surface/70 border border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated text-left text-xs font-bold text-white transition-all flex items-center justify-between group disabled:opacity-50"
+                  className="w-full p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-left text-xs font-black text-white transition-all flex items-center justify-between group disabled:opacity-50"
                 >
                   <span>{s.name}</span>
-                  <span className="text-[10px] font-semibold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[10px] font-extrabold text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     Chuyển sang &rarr;
                   </span>
                 </button>
@@ -509,7 +509,7 @@ export function StoreDetail({
             </div>
             <button
               onClick={() => setShowBulkMoveModal(false)}
-              className="w-full py-2.5 rounded-2xl border border-border-subtle text-xs font-semibold text-white/70 hover:text-white transition-all"
+              className="w-full py-2.5 rounded-2xl bg-white/10 text-xs font-bold text-white/80 hover:text-white transition-all"
             >
               Hủy
             </button>
@@ -517,34 +517,34 @@ export function StoreDetail({
         </div>
       )}
 
-      {/* Bulk Delete Order Photos Modal */}
+      {/* Bulk Delete Order Photos Modal (Borderless) */}
       {showBulkDeleteModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/85 backdrop-blur-md"
             onClick={() => setShowBulkDeleteModal(false)}
           />
-          <div className="relative w-full max-w-sm rounded-3xl bg-surface-elevated border border-border-subtle p-6 text-center shadow-2xl animate-fade-in">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center mb-3 border border-rose-500/30">
+          <div className="relative w-full max-w-sm rounded-3xl glass-modal p-6 text-center shadow-2xl animate-fade-in border-none">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center mb-3">
               <Trash2 className="w-6 h-6" />
             </div>
             <h3 className="text-base font-extrabold text-white mb-1">
               Xóa {selectedIds.size} ảnh đơn hàng?
             </h3>
-            <p className="text-xs text-white/50 mb-5">
+            <p className="text-xs text-white/60 mb-5">
               Hành động này sẽ xóa vĩnh viễn các ảnh đơn hàng đã chọn khỏi hệ thống và giải phóng bộ nhớ. Thao tác không thể hoàn tác!
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBulkDeleteModal(false)}
-                className="flex-1 rounded-2xl border border-border-subtle py-2.5 text-xs font-semibold text-white/70 hover:text-white transition-all active:scale-95"
+                className="flex-1 rounded-2xl bg-white/10 py-2.5 text-xs font-bold text-white/80 hover:text-white transition-all active:scale-95"
               >
                 Hủy
               </button>
               <button
                 onClick={handleBulkDelete}
                 disabled={bulkProcessing}
-                className="flex-1 rounded-2xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
+                className="flex-1 rounded-2xl bg-rose-600 py-2.5 text-xs font-black text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
               >
                 {bulkProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
                 Xóa tất cả
@@ -556,3 +556,4 @@ export function StoreDetail({
     </div>
   );
 }
+

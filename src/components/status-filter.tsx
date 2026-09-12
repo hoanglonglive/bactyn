@@ -48,15 +48,15 @@ export function StatusFilter({ counts, activeFilter, onFilterChange }: Props) {
             onClick={() => onFilterChange(filter.key)}
             aria-pressed={isActive}
             className={cn(
-              "min-h-11 flex-shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80 active:scale-95 shadow-md",
+              "min-h-11 flex-shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold border-none transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-95 shadow-md",
               isActive
                 ? filter.key
                   ? STATUS_CONFIG[filter.key].bgColor +
                     " " +
                     STATUS_CONFIG[filter.key].color +
-                    " ring-2 ring-indigo-500/40 border-white/30 shadow-indigo-500/20"
-                  : "bg-indigo-600/90 border-indigo-400/50 text-white ring-2 ring-indigo-500/40 shadow-indigo-500/25"
-                : "bg-white/[0.04] backdrop-blur-md border-white/10 text-white/60 hover:text-white hover:bg-white/[0.09] hover:border-white/20"
+                    " ring-2 ring-amber-400/60 shadow-amber-500/20"
+                  : "bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-black font-extrabold shadow-amber-500/30"
+                : "bg-white/[0.06] backdrop-blur-md text-white/60 hover:text-white hover:bg-white/[0.12]"
             )}
           >
             {filter.key && (
@@ -70,7 +70,9 @@ export function StatusFilter({ counts, activeFilter, onFilterChange }: Props) {
               className={cn(
                 "min-w-[20px] px-1.5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shadow-inner",
                 isActive
-                  ? "bg-white/25 text-white"
+                  ? filter.key
+                    ? "bg-white/20 text-white"
+                    : "bg-black/30 text-amber-300"
                   : "bg-white/10 text-white/70"
               )}
             >
@@ -82,4 +84,5 @@ export function StatusFilter({ counts, activeFilter, onFilterChange }: Props) {
     </div>
   );
 }
+
 

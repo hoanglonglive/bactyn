@@ -63,17 +63,17 @@ export function CreateStoreDialog({ onClose }: Props) {
       />
 
       {/* Dialog Window */}
-      <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-surface-elevated border-t sm:border border-border-subtle p-6 animate-slide-up shadow-2xl">
+      <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-black border-0 p-6 animate-slide-up shadow-2xl shadow-amber-500/10">
         {/* Mobile handle */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4 sm:hidden" />
 
-        <div className="flex items-center justify-between mb-5 pb-3 border-b border-border-subtle">
+        <div className="flex items-center justify-between mb-5 pb-3 border-b border-white/5">
           <div>
             <h2 className="text-base font-extrabold text-white flex items-center gap-2">
-              <StoreIcon className="w-5 h-5 text-indigo-400" />
+              <StoreIcon className="w-5 h-5 text-amber-400" />
               Tạo gian hàng mới
             </h2>
-            <p className="text-[11px] text-white/40 mt-0.5">
+            <p className="text-[11px] text-white/50 mt-0.5">
               Khởi tạo album lưu trữ đơn hàng cho gian hàng
             </p>
           </div>
@@ -88,13 +88,13 @@ export function CreateStoreDialog({ onClose }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Cover Image Upload Area */}
           <div>
-            <label className="block text-xs font-semibold text-white/60 mb-1.5">
+            <label className="block text-xs font-semibold text-white/70 mb-1.5">
               Ảnh bìa gian hàng (Tùy chọn)
             </label>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="relative w-full aspect-[16/9] rounded-2xl border-2 border-dashed border-white/15 bg-surface-overlay flex flex-col items-center justify-center gap-2 hover:border-indigo-500/50 hover:bg-white/[0.02] transition-all overflow-hidden group shadow-inner"
+              className="relative w-full aspect-[16/9] rounded-2xl border border-dashed border-amber-500/30 bg-white/[0.03] flex flex-col items-center justify-center gap-2 hover:border-amber-400 hover:bg-white/[0.05] transition-all overflow-hidden group shadow-inner"
             >
               {coverPreview ? (
                 <img
@@ -104,13 +104,13 @@ export function CreateStoreDialog({ onClose }: Props) {
                 />
               ) : (
                 <>
-                  <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <ImagePlus className="w-5 h-5 text-indigo-400" />
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <ImagePlus className="w-5 h-5 text-amber-400" />
                   </div>
-                  <span className="text-xs font-semibold text-white/50 group-hover:text-white/80 transition-colors">
+                  <span className="text-xs font-semibold text-white/70 group-hover:text-amber-400 transition-colors">
                     Tải lên ảnh bìa đại diện
                   </span>
-                  <span className="text-[10px] text-white/25">
+                  <span className="text-[10px] text-white/30">
                     Tự động tối ưu dung lượng WebP
                   </span>
                 </>
@@ -139,7 +139,7 @@ export function CreateStoreDialog({ onClose }: Props) {
               name="name"
               type="text"
               required
-              className="w-full rounded-2xl border border-border-subtle bg-surface px-4 py-3 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner"
+              className="w-full rounded-2xl bg-white/[0.05] px-4 py-3 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all shadow-inner border-0"
               placeholder="Ví dụ: Zara, H&M, Uniqlo, Store A..."
             />
           </div>
@@ -156,7 +156,7 @@ export function CreateStoreDialog({ onClose }: Props) {
               id="store-note"
               name="note"
               rows={2}
-              className="w-full rounded-2xl border border-border-subtle bg-surface px-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none shadow-inner"
+              className="w-full rounded-2xl bg-white/[0.05] px-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all resize-none shadow-inner border-0"
               placeholder="Ghi chú thêm về địa điểm, số gian..."
             />
           </div>
@@ -170,9 +170,9 @@ export function CreateStoreDialog({ onClose }: Props) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 px-4 py-3.5 text-xs font-bold text-white shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-98"
+            className="w-full rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 px-4 py-3.5 text-xs font-extrabold text-black shadow-xl shadow-amber-500/20 hover:shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-98"
           >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loading && <Loader2 className="w-4 h-4 animate-spin text-black" />}
             Tạo gian hàng mới
           </button>
         </form>

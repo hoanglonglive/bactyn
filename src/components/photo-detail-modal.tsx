@@ -227,8 +227,8 @@ export function PhotoDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col animate-fade-in select-none">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 safe-top">
+      {/* Top Bar (Borderless) */}
+      <div className="flex items-center justify-between px-4 py-3 border-b-0 safe-top bg-black/60 backdrop-blur-md">
         <button
           onClick={onClose}
           className="p-2 -ml-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all active:scale-95"
@@ -239,23 +239,23 @@ export function PhotoDetailModal({
         {/* Counter & Toggle Full Screenshot Mode */}
         <div className="flex items-center gap-2">
           {allPhotos.length > 0 && (
-            <div className="text-xs font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+            <div className="text-xs font-black text-white/90 bg-white/10 px-3 py-1 rounded-full">
               {currentIndex + 1} / {allPhotos.length}
             </div>
           )}
 
           <button
             onClick={() => setExpandedImage(!expandedImage)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-medium border border-indigo-500/30"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-black"
           >
             {expandedImage ? (
               <>
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-3.5 h-3.5 text-amber-400" />
                 <span>Chi tiết</span>
               </>
             ) : (
               <>
-                <Eye className="w-3.5 h-3.5" />
+                <Eye className="w-3.5 h-3.5 text-amber-400" />
                 <span>Toàn màn hình</span>
               </>
             )}
@@ -267,9 +267,9 @@ export function PhotoDetailModal({
           {isAdmin && (
             <button
               onClick={() => setShowMoveMenu(!showMoveMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 text-xs font-semibold hover:bg-white/20 transition-all active:scale-95 border border-white/10"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/90 text-xs font-bold hover:bg-white/20 transition-all active:scale-95"
             >
-              <ArrowRightLeft className="w-3.5 h-3.5" />
+              <ArrowRightLeft className="w-3.5 h-3.5 text-amber-400" />
               <span>Chuyển</span>
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
@@ -279,7 +279,7 @@ export function PhotoDetailModal({
           {isAdmin && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/25 text-rose-300 text-xs font-semibold hover:bg-rose-500/40 transition-all active:scale-95 border border-rose-500/30 shadow-md"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/80 text-white text-xs font-extrabold hover:bg-rose-600 transition-all active:scale-95 shadow-md"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Xóa</span>
@@ -305,7 +305,7 @@ export function PhotoDetailModal({
           {hasPrev && (
             <button
               onClick={handlePrev}
-              className="absolute left-3 z-20 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              className="absolute left-3 z-20 w-11 h-11 rounded-full bg-black/80 backdrop-blur-md text-white hover:bg-black flex items-center justify-center transition-all active:scale-90 shadow-2xl"
               title="Ảnh trước (←)"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -316,7 +316,7 @@ export function PhotoDetailModal({
           {hasNext && (
             <button
               onClick={handleNext}
-              className="absolute right-3 z-20 w-11 h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              className="absolute right-3 z-20 w-11 h-11 rounded-full bg-black/80 backdrop-blur-md text-white hover:bg-black flex items-center justify-center transition-all active:scale-90 shadow-2xl"
               title="Ảnh sau (→)"
             >
               <ChevronRight className="w-6 h-6" />
@@ -336,17 +336,17 @@ export function PhotoDetailModal({
           {/* Full Screen Toggle Button at bottom right */}
           <button
             onClick={() => setExpandedImage(!expandedImage)}
-            className="absolute z-10 bottom-4 right-4 px-3 py-2 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-white/90 hover:text-white transition-all active:scale-95 shadow-xl flex items-center gap-1.5 text-xs font-semibold"
+            className="absolute z-10 bottom-4 right-4 px-3.5 py-2 rounded-xl bg-black/80 backdrop-blur-md text-white hover:text-amber-300 transition-all active:scale-95 shadow-xl flex items-center gap-1.5 text-xs font-bold"
             title={expandedImage ? "Thu nhỏ xem thông tin" : "Xem toàn màn hình đầy đủ"}
           >
             {expandedImage ? (
               <>
-                <Minimize2 className="w-4 h-4 text-indigo-400" />
+                <Minimize2 className="w-4 h-4 text-amber-400" />
                 <span className="hidden sm:inline">Thu nhỏ</span>
               </>
             ) : (
               <>
-                <Maximize2 className="w-4 h-4 text-indigo-400" />
+                <Maximize2 className="w-4 h-4 text-amber-400" />
                 <span className="hidden sm:inline">Toàn màn hình</span>
               </>
             )}
@@ -354,13 +354,13 @@ export function PhotoDetailModal({
         </div>
 
         {/* Status Selector Bar with Role-Based Permission Enforcements */}
-        <div className="px-4 py-3 bg-surface/60 border-y border-white/10">
+        <div className="px-4 py-3 bg-black/80 backdrop-blur-md border-none">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
+            <p className="text-[11px] font-black text-white/50 uppercase tracking-wider">
               Cập nhật trạng thái đơn
             </p>
             {!isAdmin && (
-              <span className="text-[10px] text-amber-300/80 font-medium flex items-center gap-1">
+              <span className="text-[10px] text-amber-300 font-bold flex items-center gap-1">
                 <Lock className="w-3 h-3" />
                 Nhân viên (Quyền hạn chế)
               </span>
@@ -380,12 +380,12 @@ export function PhotoDetailModal({
                   onClick={() => handleStatusChange(status)}
                   disabled={!canClick}
                   className={cn(
-                    "relative flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-md",
+                    "relative flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-2xl text-xs font-black transition-all active:scale-95 shadow-md border-none",
                     isActive
-                      ? config.bgColor + " " + config.color + " border-white/30 ring-2 ring-indigo-500/40"
+                      ? config.bgColor + " " + config.color + " ring-2 ring-amber-400/80 shadow-amber-500/30"
                       : canClick
-                      ? "border-border-subtle bg-surface-overlay/60 text-white/50 hover:text-white/80 hover:bg-surface-overlay"
-                      : "border-border-subtle/30 bg-surface/30 text-white/20 cursor-not-allowed opacity-40",
+                      ? "bg-white/10 text-white/60 hover:text-white hover:bg-white/15"
+                      : "bg-white/5 text-white/20 cursor-not-allowed opacity-40",
                     statusAnimating === status && "animate-bounce"
                   )}
                   title={!canClick ? "Trạng thái này chỉ dành cho Admin" : config.labelVi}
@@ -404,66 +404,66 @@ export function PhotoDetailModal({
         {/* Editable Details Form */}
         {!expandedImage && (
           <div className="p-4 space-y-3 max-w-lg mx-auto w-full">
-            <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
+            <p className="text-[11px] font-black text-white/50 uppercase tracking-wider">
               Chi tiết thông tin đơn hàng
             </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                <label className="text-[10px] font-bold text-white/60 mb-1 block">
                   Mã đơn hàng
                 </label>
                 <input
                   value={orderCode}
                   onChange={(e) => setOrderCode(e.target.value)}
                   onBlur={handleSaveInfo}
-                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  className="w-full rounded-2xl glass-input px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none transition-all border-none"
                   placeholder="Ví dụ: ORD-102"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                <label className="text-[10px] font-bold text-white/60 mb-1 block">
                   Tên khách hàng
                 </label>
                 <input
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   onBlur={handleSaveInfo}
-                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  className="w-full rounded-2xl glass-input px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none transition-all border-none"
                   placeholder="Nguyễn Văn A"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                <label className="text-[10px] font-bold text-white/60 mb-1 block">
                   Kích thước (Size)
                 </label>
                 <input
                   value={size}
                   onChange={(e) => setSize(e.target.value)}
                   onBlur={handleSaveInfo}
-                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  className="w-full rounded-2xl glass-input px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none transition-all border-none"
                   placeholder="M, L, XL, 42..."
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+                <label className="text-[10px] font-bold text-white/60 mb-1 block">
                   Màu sắc
                 </label>
                 <input
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
                   onBlur={handleSaveInfo}
-                  className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  className="w-full rounded-2xl glass-input px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none transition-all border-none"
                   placeholder="Đen, Trắng, Đỏ..."
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold text-white/50 mb-1 block">
+              <label className="text-[10px] font-bold text-white/60 mb-1 block">
                 Ghi chú thêm
               </label>
               <textarea
@@ -471,13 +471,13 @@ export function PhotoDetailModal({
                 onChange={(e) => setNote(e.target.value)}
                 onBlur={handleSaveInfo}
                 rows={2}
-                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"
+                className="w-full rounded-2xl glass-input px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none transition-all resize-none border-none"
                 placeholder="Nhập thêm chi tiết ghi chú..."
               />
             </div>
 
             {saving && (
-              <p className="text-[10px] text-indigo-400 flex items-center justify-end gap-1 font-medium animate-pulse">
+              <p className="text-[10px] text-amber-400 flex items-center justify-end gap-1 font-bold animate-pulse">
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Đang tự động lưu...
               </p>
@@ -486,14 +486,14 @@ export function PhotoDetailModal({
         )}
       </div>
 
-      {/* Admin Move Menu Dropdown */}
+      {/* Admin Move Menu Dropdown (Borderless) */}
       {showMoveMenu && isAdmin && (
         <div className="fixed inset-0 z-60" onClick={() => setShowMoveMenu(false)}>
           <div
-            className="absolute top-14 right-4 w-60 rounded-2xl bg-surface-elevated border border-border-subtle shadow-2xl py-2 animate-fade-in"
+            className="absolute top-14 right-4 w-60 rounded-3xl glass-modal shadow-2xl py-2 animate-fade-in border-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="px-4 py-2 text-[10px] font-bold text-white/40 uppercase tracking-wider">
+            <p className="px-4 py-2 text-[10px] font-black text-white/50 uppercase tracking-wider">
               Chuyển sang gian hàng khác
             </p>
             {otherStores.length === 0 ? (
@@ -506,12 +506,12 @@ export function PhotoDetailModal({
                   key={store.id}
                   onClick={() => handleMove(store.id)}
                   disabled={moving}
-                  className="w-full text-left px-4 py-2.5 text-xs text-white/80 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2.5 text-xs font-bold text-white/80 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {moving ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-400" />
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-amber-400" />
                   )}
                   <span className="truncate">{store.name}</span>
                 </button>
@@ -521,29 +521,29 @@ export function PhotoDetailModal({
         </div>
       )}
 
-      {/* Admin Delete Confirmation */}
+      {/* Admin Delete Confirmation (Borderless) */}
       {showDeleteConfirm && isAdmin && (
         <div className="fixed inset-0 z-60 flex items-center justify-center px-6">
           <div
-            className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/85 backdrop-blur-md"
             onClick={() => setShowDeleteConfirm(false)}
           />
-          <div className="relative w-full max-w-xs rounded-2xl bg-surface-elevated border border-border-subtle p-5 text-center shadow-2xl animate-fade-in">
-            <p className="text-base font-bold text-white mb-1.5">Xóa ảnh đơn này?</p>
-            <p className="text-xs text-white/50 mb-5">
+          <div className="relative w-full max-w-xs rounded-3xl glass-modal p-6 text-center shadow-2xl animate-fade-in border-none">
+            <p className="text-base font-black text-white mb-1.5">Xóa ảnh đơn này?</p>
+            <p className="text-xs text-white/60 mb-5">
               Hành động này không thể hoàn tác. Ảnh sẽ bị xóa vĩnh viễn khỏi hệ thống.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-xl border border-border-subtle py-2.5 text-xs font-semibold text-white/70 hover:text-white transition-all active:scale-95"
+                className="flex-1 rounded-2xl bg-white/10 py-2.5 text-xs font-bold text-white/80 hover:text-white transition-all active:scale-95"
               >
                 Hủy
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
+                className="flex-1 rounded-2xl bg-rose-600 py-2.5 text-xs font-black text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Xóa ngay
@@ -552,6 +552,7 @@ export function PhotoDetailModal({
           </div>
         </div>
       )}
+
     </div>
   );
 }

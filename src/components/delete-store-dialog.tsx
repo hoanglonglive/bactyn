@@ -38,7 +38,7 @@ export function DeleteStoreDialog({ store, onClose }: Props) {
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-sm rounded-3xl bg-surface-elevated border border-border-subtle p-6 animate-fade-in">
+      <div className="relative w-full max-w-sm rounded-3xl bg-black border-0 p-6 animate-fade-in shadow-2xl shadow-rose-500/10">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5"
@@ -77,14 +77,14 @@ export function DeleteStoreDialog({ store, onClose }: Props) {
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl border border-border-subtle bg-surface px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white/80 hover:bg-surface-overlay transition-all"
+            className="flex-1 rounded-xl border-0 bg-white/10 px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/20 transition-all"
           >
             Hủy
           </button>
           <button
             onClick={handleDelete}
             disabled={loading}
-            className="flex-1 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+            className="flex-1 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-600/20"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             Xóa

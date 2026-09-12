@@ -169,18 +169,18 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
           setIsDragging(false);
           if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
         }}
-        className={`relative w-full max-w-md max-h-[85dvh] rounded-t-3xl sm:rounded-3xl bg-surface-elevated border-t sm:border border-border-subtle flex flex-col animate-slide-up shadow-2xl transition-all ${
-          isDragging ? "ring-2 ring-indigo-500 bg-indigo-950/20" : ""
+        className={`relative w-full max-w-md max-h-[85dvh] rounded-t-3xl sm:rounded-3xl bg-black border-0 flex flex-col animate-slide-up shadow-2xl shadow-amber-500/10 transition-all ${
+          isDragging ? "ring-2 ring-amber-400 bg-amber-950/20" : ""
         }`}
       >
         {/* Handle bar on mobile */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-3 sm:hidden" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
           <div>
             <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <UploadCloud className="w-5 h-5 text-indigo-400" />
+              <UploadCloud className="w-5 h-5 text-amber-400" />
               Tải ảnh đơn hàng
             </h2>
             <p className="text-[11px] text-white/40">
@@ -199,16 +199,16 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
         <div className="flex gap-3 px-6 pt-4 pb-2">
           <button
             onClick={() => cameraRef.current?.click()}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-border-subtle bg-surface-overlay hover:bg-surface-overlay/80 text-white font-medium text-xs transition-all active:scale-95 shadow-md"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-medium text-xs transition-all active:scale-95 border-0"
           >
-            <Camera className="w-4 h-4 text-indigo-400" />
+            <Camera className="w-4 h-4 text-amber-400" />
             <span>Chụp ảnh</span>
           </button>
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-border-subtle bg-surface-overlay hover:bg-surface-overlay/80 text-white font-medium text-xs transition-all active:scale-95 shadow-md"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-medium text-xs transition-all active:scale-95 border-0"
           >
-            <ImagePlus className="w-4 h-4 text-violet-400" />
+            <ImagePlus className="w-4 h-4 text-amber-400" />
             <span>Chọn từ album</span>
           </button>
 
@@ -234,9 +234,9 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
         {files.length === 0 && (
           <div
             onClick={() => fileRef.current?.click()}
-            className="mx-6 my-4 p-8 border-2 border-dashed border-white/15 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/50 hover:bg-white/[0.02] transition-all text-center group"
+            className="mx-6 my-4 p-8 border border-dashed border-amber-500/30 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-400 hover:bg-white/[0.03] transition-all text-center group"
           >
-            <UploadCloud className="w-10 h-10 text-white/20 group-hover:text-indigo-400 transition-colors mb-2" />
+            <UploadCloud className="w-10 h-10 text-white/20 group-hover:text-amber-400 transition-colors mb-2" />
             <p className="text-xs font-semibold text-white/70">
               Kéo & thả ảnh vào đây hoặc nhấp để chọn
             </p>
@@ -253,7 +253,7 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
               {files.map((f) => (
                 <div
                   key={f.id}
-                  className="relative aspect-square rounded-2xl overflow-hidden bg-surface-overlay border border-border-subtle shadow-md"
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-white/5 border-0 shadow-md"
                 >
                   <img
                     src={f.previewUrl}
@@ -264,17 +264,17 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
                   {/* Status Overlay Indicator */}
                   {f.status === "compressing" && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
                     </div>
                   )}
                   {f.status === "uploading" && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+                      <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
                     </div>
                   )}
                   {f.status === "done" && (
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
-                      <CheckCircle2 className="w-7 h-7 text-emerald-400 drop-shadow-md animate-bounce" />
+                      <CheckCircle2 className="w-7 h-7 text-amber-400 drop-shadow-md animate-bounce" />
                     </div>
                   )}
                   {f.status === "error" && (
@@ -300,25 +300,25 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
 
         {/* Action Button Bar */}
         {files.length > 0 && (
-          <div className="p-6 border-t border-border-subtle bg-surface-elevated rounded-b-3xl">
+          <div className="p-6 border-t border-white/5 bg-black rounded-b-3xl">
             {uploadProgress && (
-              <p className="text-xs text-indigo-400 mb-2 text-center font-medium animate-pulse">
+              <p className="text-xs text-amber-400 mb-2 text-center font-medium animate-pulse">
                 {uploadProgress}
               </p>
             )}
             <button
               onClick={handleUpload}
               disabled={uploading || readyCount === 0}
-              className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 px-4 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-98"
+              className="w-full rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 px-4 py-3.5 text-xs font-extrabold text-black shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-98"
             >
               {uploading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-black" />
                   Đang tải ảnh lên...
                 </>
               ) : compressingCount > 0 ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-black" />
                   Đang nén {compressingCount} ảnh...
                 </>
               ) : (
