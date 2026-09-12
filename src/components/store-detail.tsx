@@ -249,23 +249,23 @@ export function StoreDetail({
   return (
     <div className="min-h-dvh bg-surface">
       {/* Header */}
-      <header className="sticky top-0 z-30 glass border-b border-border-subtle shadow-md">
+      <header className="sticky top-0 z-30 glass-header">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Link
               href="/stores"
-              className="p-1.5 -ml-1.5 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all active:scale-95 flex-shrink-0"
+              className="p-2 -ml-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all active:scale-95 flex-shrink-0 backdrop-blur-md"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-bold text-white truncate">
+              <h1 className="text-base font-extrabold text-white truncate drop-shadow-sm">
                 {store.name}
               </h1>
-              <p className="text-[10px] text-white/40 flex items-center gap-1.5">
+              <p className="text-[10px] font-medium text-white/50 flex items-center gap-1.5">
                 <span>Hiển thị {filteredItems.length} / {items.length} ảnh đơn</span>
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-0.5 text-amber-400 font-semibold bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20">
+                  <span className="inline-flex items-center gap-0.5 text-amber-300 font-bold bg-amber-400/15 px-2 py-0.5 rounded-full border border-amber-400/35 shadow-inner">
                     <ShieldCheck className="w-3 h-3" />
                     Admin
                   </span>
@@ -276,19 +276,19 @@ export function StoreDetail({
         </div>
 
         {/* Instant Search Bar & View Mode Toggle */}
-        <div className="px-4 pb-2 flex items-center gap-2">
+        <div className="px-4 pb-2.5 flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo mã đơn, tên khách, size, ghi chú..."
-              className="w-full pl-9 pr-8 py-2 rounded-xl bg-surface-elevated border border-border-subtle text-xs text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all"
+              className="w-full pl-10 pr-9 py-2.5 rounded-2xl glass-input text-xs text-white placeholder-white/30 focus:outline-none transition-all shadow-inner"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-0.5"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -296,28 +296,28 @@ export function StoreDetail({
           </div>
 
           {/* Grid / List Mode Toggle */}
-          <div className="flex items-center bg-surface-elevated rounded-xl p-1 border border-border-subtle shadow-sm flex-shrink-0">
+          <div className="flex items-center glass-panel rounded-2xl p-1 flex-shrink-0">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-lg transition-all ${
+              className={`p-2 rounded-xl transition-all ${
                 viewMode === "grid"
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "text-white/40 hover:text-white/70"
+                  ? "bg-indigo-600 text-white shadow-md border border-indigo-400/30"
+                  : "text-white/40 hover:text-white/80"
               }`}
               title="Xem dạng lưới"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
+              <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded-lg transition-all ${
+              className={`p-2 rounded-xl transition-all ${
                 viewMode === "list"
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "text-white/40 hover:text-white/70"
+                  ? "bg-indigo-600 text-white shadow-md border border-indigo-400/30"
+                  : "text-white/40 hover:text-white/80"
               }`}
               title="Xem dạng danh sách"
             >
-              <List className="w-3.5 h-3.5" />
+              <List className="w-4 h-4" />
             </button>
           </div>
 
@@ -327,14 +327,14 @@ export function StoreDetail({
               setSelectMode(!selectMode);
               if (selectMode) setSelectedIds(new Set());
             }}
-            className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0 ${
+            className={`px-3 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0 ${
               selectMode
-                ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30"
-                : "bg-surface-elevated text-white/70 border-border-subtle hover:text-white"
+                ? "bg-indigo-600 text-white border border-indigo-400/40 shadow-lg shadow-indigo-600/35"
+                : "glass-panel text-white/70 hover:text-white hover:border-white/20"
             }`}
             title="Bật/Tắt chọn nhiều ảnh đơn hàng"
           >
-            <CheckSquare className="w-3.5 h-3.5" />
+            <CheckSquare className="w-4 h-4" />
             <span className="hidden sm:inline">{selectMode ? "Hủy chọn" : "Chọn nhiều"}</span>
           </button>
         </div>

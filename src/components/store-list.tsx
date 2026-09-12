@@ -216,22 +216,22 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
   return (
     <div className="min-h-dvh bg-surface pb-28 select-none">
       {/* Top Header */}
-      <header className="sticky top-0 z-30 glass border-b border-border-subtle shadow-lg">
+      <header className="sticky top-0 z-30 glass-header">
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 border border-white/20">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 border border-white/25">
               <Package className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-extrabold text-white leading-tight tracking-tight">
+              <h1 className="text-base font-extrabold text-white leading-tight tracking-tight drop-shadow-sm">
                 Bactyn Orders
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[11px] font-medium text-white/50 truncate max-w-[140px]">
+                <span className="text-[11px] font-medium text-white/60 truncate max-w-[140px]">
                   {profile?.full_name || profile?.email}
                 </span>
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-300 bg-amber-400/15 px-1.5 py-0.2 rounded-full border border-amber-400/30">
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-300 bg-amber-400/15 px-2 py-0.5 rounded-full border border-amber-400/35 shadow-inner">
                     <ShieldCheck className="w-2.5 h-2.5" />
                     Admin
                   </span>
@@ -244,7 +244,7 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
             {isAdmin && (
               <button
                 onClick={() => setShowUserModal(true)}
-                className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition-all active:scale-95 shadow-sm"
+                className="px-3.5 py-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/35 transition-all active:scale-95 shadow-md shadow-amber-500/10 backdrop-blur-md"
                 title="Quản lý thành viên & phân quyền"
               >
                 <Users className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
 
             <button
               onClick={() => signOut()}
-              className="p-2 rounded-xl text-white/40 hover:text-white/80 hover:bg-white/10 transition-all active:scale-95 border border-transparent hover:border-white/10"
+              className="p-2 rounded-2xl text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95 border border-transparent hover:border-white/15 backdrop-blur-md"
               title="Đăng xuất"
             >
               <LogOut className="w-5 h-5" />
@@ -266,29 +266,29 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
       {/* Main Content Area */}
       <main className="max-w-5xl mx-auto px-4 pt-4 space-y-4">
         {/* Overview Stats Widgets */}
-        <div className="grid grid-cols-3 gap-2.5">
-          <div className="p-3 rounded-2xl bg-surface-elevated/80 border border-border-subtle shadow-md flex flex-col justify-between">
-            <div className="flex items-center justify-between text-white/40 mb-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Gian hàng</span>
-              <StoreIcon className="w-3.5 h-3.5 text-indigo-400" />
+        <div className="grid grid-cols-3 gap-3">
+          <div className="p-3.5 rounded-3xl glass-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-white/50 mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Gian hàng</span>
+              <StoreIcon className="w-4 h-4 text-indigo-400" />
             </div>
-            <p className="text-lg font-extrabold text-white">{stats.totalStores}</p>
+            <p className="text-xl font-black text-white drop-shadow-sm">{stats.totalStores}</p>
           </div>
 
-          <div className="p-3 rounded-2xl bg-surface-elevated/80 border border-border-subtle shadow-md flex flex-col justify-between">
-            <div className="flex items-center justify-between text-white/40 mb-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Tổng ảnh</span>
-              <ImageIcon className="w-3.5 h-3.5 text-purple-400" />
+          <div className="p-3.5 rounded-3xl glass-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-white/50 mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Tổng ảnh</span>
+              <ImageIcon className="w-4 h-4 text-purple-400" />
             </div>
-            <p className="text-lg font-extrabold text-white">{stats.totalItems}</p>
+            <p className="text-xl font-black text-white drop-shadow-sm">{stats.totalItems}</p>
           </div>
 
-          <div className="p-3 rounded-2xl bg-surface-elevated/80 border border-border-subtle shadow-md flex flex-col justify-between">
-            <div className="flex items-center justify-between text-white/40 mb-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Chờ gom</span>
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <div className="p-3.5 rounded-3xl glass-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-white/50 mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Chờ gom</span>
+              <Clock className="w-4 h-4 text-amber-400" />
             </div>
-            <p className="text-lg font-extrabold text-amber-400">{stats.pendingCount}</p>
+            <p className="text-xl font-black text-amber-400 drop-shadow-sm">{stats.pendingCount}</p>
           </div>
         </div>
 
@@ -302,15 +302,15 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
         </div>
 
         {/* Navigation Tabs Bar */}
-        <div className="flex items-center gap-2 p-1 rounded-2xl bg-surface-elevated/80 border border-border-subtle shadow-md">
+        <div className="flex items-center gap-2 p-1.5 rounded-3xl glass-panel">
           <button
             onClick={() => {
               setActiveTab("stores");
               setActiveStatusFilter(null);
             }}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-3 rounded-2xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
               activeTab === "stores" && !activeStatusFilter
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/35 border border-indigo-400/40"
                 : "text-white/60 hover:text-white hover:bg-white/5"
             }`}
           >
@@ -320,9 +320,9 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
 
           <button
             onClick={() => setActiveTab("all-photos")}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-3 rounded-2xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
               activeTab === "all-photos" || activeStatusFilter
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/35 border border-indigo-400/40"
                 : "text-white/60 hover:text-white hover:bg-white/5"
             }`}
           >
@@ -334,7 +334,7 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
         {/* Search & View Mode Toolbar */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -343,12 +343,12 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
                   ? "Tìm theo mã đơn, tên khách, gian hàng, size..."
                   : "Tìm kiếm gian hàng..."
               }
-              className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-surface-elevated border border-border-subtle text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner"
+              className="w-full pl-11 pr-10 py-3 rounded-2xl glass-input text-xs text-white placeholder-white/30 focus:outline-none transition-all shadow-inner"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-0.5"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-1"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -356,13 +356,13 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
           </div>
 
           {/* Grid / List Mode Toggle */}
-          <div className="flex items-center bg-surface-elevated rounded-2xl p-1 border border-border-subtle shadow-sm">
+          <div className="flex items-center glass-panel rounded-2xl p-1">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-xl transition-all ${
+              className={`p-2.5 rounded-xl transition-all ${
                 viewMode === "grid"
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "text-white/40 hover:text-white/70"
+                  ? "bg-indigo-600 text-white shadow-md border border-indigo-400/30"
+                  : "text-white/40 hover:text-white/80"
               }`}
               title="Xem dạng lưới"
             >
@@ -370,10 +370,10 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-xl transition-all ${
+              className={`p-2.5 rounded-xl transition-all ${
                 viewMode === "list"
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "text-white/40 hover:text-white/70"
+                  ? "bg-indigo-600 text-white shadow-md border border-indigo-400/30"
+                  : "text-white/40 hover:text-white/80"
               }`}
               title="Xem dạng danh sách"
             >
@@ -388,10 +388,10 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
                 setSelectMode(!selectMode);
                 if (selectMode) setSelectedIds(new Set());
               }}
-              className={`px-3 py-2 rounded-2xl border text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
+              className={`px-3.5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 ${
                 selectMode
-                  ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30"
-                  : "bg-surface-elevated text-white/70 border-border-subtle hover:text-white"
+                  ? "bg-indigo-600 text-white border border-indigo-400/40 shadow-lg shadow-indigo-600/35"
+                  : "glass-panel text-white/70 hover:text-white hover:border-white/20"
               }`}
               title="Bật/Tắt chế độ chọn hàng loạt"
             >
@@ -577,12 +577,12 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
 
 function StoreStatusBreakdown({ store }: { store: StoreWithCounts }) {
   const items = [
-    { key: "purchased", label: "Đã mua", emoji: "🟢", color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/25", count: store.purchased_count || 0 },
-    { key: "partially", label: "Chưa mua xong", emoji: "🟠", color: "text-orange-400 bg-orange-500/15 border-orange-500/25", count: store.partially_purchased_count || 0 },
-    { key: "pending", label: "Chờ order", emoji: "🟡", color: "text-amber-400 bg-amber-500/15 border-amber-500/25", count: store.pending_count || 0 },
-    { key: "delivered", label: "Đã giao", emoji: "🔵", color: "text-sky-400 bg-sky-500/15 border-sky-500/25", count: store.delivered_count || 0 },
-    { key: "in_stock", label: "Tồn kho", emoji: "📦", color: "text-purple-400 bg-purple-500/15 border-purple-500/25", count: store.in_stock_count || 0 },
-    { key: "out_of_stock", label: "Hết hàng", emoji: "🔴", color: "text-rose-400 bg-rose-500/15 border-rose-500/25", count: store.out_of_stock_count || 0 },
+    { key: "purchased", label: "Đã mua", emoji: "🟢", color: "text-emerald-300 bg-emerald-500/15 border-emerald-500/30", count: store.purchased_count || 0 },
+    { key: "partially", label: "Chưa mua xong", emoji: "🟠", color: "text-orange-300 bg-orange-500/15 border-orange-500/30", count: store.partially_purchased_count || 0 },
+    { key: "pending", label: "Chờ order", emoji: "🟡", color: "text-amber-300 bg-amber-500/15 border-amber-500/30", count: store.pending_count || 0 },
+    { key: "delivered", label: "Đã giao", emoji: "🔵", color: "text-sky-300 bg-sky-500/15 border-sky-500/30", count: store.delivered_count || 0 },
+    { key: "in_stock", label: "Tồn kho", emoji: "📦", color: "text-purple-300 bg-purple-500/15 border-purple-500/30", count: store.in_stock_count || 0 },
+    { key: "out_of_stock", label: "Hết hàng", emoji: "🔴", color: "text-rose-300 bg-rose-500/15 border-rose-500/30", count: store.out_of_stock_count || 0 },
   ].filter((st) => st.count > 0);
 
   if (store.total_items === 0 || items.length === 0) {
@@ -598,7 +598,7 @@ function StoreStatusBreakdown({ store }: { store: StoreWithCounts }) {
       {items.map((st) => (
         <span
           key={st.key}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${st.color}`}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-bold backdrop-blur-md shadow-sm ${st.color}`}
         >
           <span>{st.emoji}</span>
           <span>{st.label}:</span>
@@ -639,21 +639,21 @@ function StoreCard({
         {selectMode ? (
           <div
             onClick={onToggleSelect}
-            className={`flex items-center gap-3.5 p-3 rounded-2xl bg-surface-elevated border transition-all cursor-pointer shadow-md ${
+            className={`flex items-center gap-3.5 p-3.5 rounded-3xl glass-card transition-all cursor-pointer ${
               isSelected
-                ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/50"
-                : "border-border-subtle hover:border-white/20"
+                ? "border-indigo-400 bg-indigo-500/15 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20"
+                : "hover:border-white/20"
             }`}
           >
             {/* Checkbox Icon */}
-            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+            <div className={`w-6 h-6 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
               isSelected ? "bg-indigo-600 text-white shadow-md" : "border-2 border-white/30 bg-black/40"
             }`}>
               {isSelected && <Check className="w-4 h-4" />}
             </div>
 
             {/* Cover Thumbnail */}
-            <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-surface-overlay flex-shrink-0 border border-white/10">
+            <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-black/40 flex-shrink-0 border border-white/15 shadow-md">
               {store.cover_url ? (
                 <img
                   src={store.cover_url}
@@ -671,15 +671,15 @@ function StoreCard({
             {/* Details */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-bold text-white truncate">
+                <h3 className="text-sm font-extrabold text-white truncate">
                   {store.name}
                 </h3>
-                <span className="text-[10px] font-bold text-white/60 bg-white/10 px-2 py-0.5 rounded-full border border-white/10 flex-shrink-0">
+                <span className="text-[10px] font-extrabold text-white/80 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15 flex-shrink-0 backdrop-blur-md shadow-sm">
                   {store.total_items} ảnh
                 </span>
               </div>
               {store.note && (
-                <p className="text-[11px] text-white/40 truncate mt-0.5">
+                <p className="text-[11px] text-white/50 truncate mt-0.5">
                   {store.note}
                 </p>
               )}
@@ -690,45 +690,45 @@ function StoreCard({
           <Link
             href={`/stores/${store.id}`}
             prefetch={true}
-            className="flex items-center gap-3.5 p-3 rounded-2xl bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated/80 transition-all active:scale-[0.99] shadow-md hover:shadow-xl"
+            className="flex items-center gap-3.5 p-3.5 rounded-3xl glass-card hover:border-indigo-400/50 hover:bg-white/[0.08] transition-all active:scale-[0.99]"
           >
-          {/* Cover Thumbnail */}
-          <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-surface-overlay flex-shrink-0 border border-white/10">
-            {store.cover_url ? (
-              <img
-                src={store.cover_url}
-                alt={store.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-indigo-900/60 to-purple-900/60 flex items-center justify-center font-black text-indigo-200 text-sm">
-                {storeInitials}
-              </div>
-            )}
-          </div>
-
-          {/* Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-white truncate group-hover:text-indigo-300 transition-colors">
-                {store.name}
-              </h3>
-              <span className="text-[10px] font-bold text-white/60 bg-white/10 px-2 py-0.5 rounded-full border border-white/10 flex-shrink-0">
-                {store.total_items} ảnh
-              </span>
+            {/* Cover Thumbnail */}
+            <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-black/40 flex-shrink-0 border border-white/15 shadow-md">
+              {store.cover_url ? (
+                <img
+                  src={store.cover_url}
+                  alt={store.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-indigo-900/60 to-purple-900/60 flex items-center justify-center font-black text-indigo-200 text-sm">
+                  {storeInitials}
+                </div>
+              )}
             </div>
 
-            {store.note && (
-              <p className="text-[11px] text-white/40 truncate mt-0.5">
-                {store.note}
-              </p>
-            )}
+            {/* Details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-extrabold text-white truncate group-hover:text-indigo-300 transition-colors">
+                  {store.name}
+                </h3>
+                <span className="text-[10px] font-extrabold text-white/80 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15 flex-shrink-0 backdrop-blur-md shadow-sm">
+                  {store.total_items} ảnh
+                </span>
+              </div>
 
-            {/* Status Breakdown Pills */}
-            <StoreStatusBreakdown store={store} />
-          </div>
-        </Link>
+              {store.note && (
+                <p className="text-[11px] text-white/50 truncate mt-0.5">
+                  {store.note}
+                </p>
+              )}
+
+              {/* Status Breakdown Pills */}
+              <StoreStatusBreakdown store={store} />
+            </div>
+          </Link>
         )}
 
         {/* Admin Delete Button */}
@@ -739,7 +739,7 @@ function StoreCard({
               e.stopPropagation();
               onDelete();
             }}
-            className="absolute right-3 top-3 p-1.5 rounded-xl bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 border border-rose-500/30"
+            className="absolute right-3.5 top-3.5 p-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 border border-rose-500/35 backdrop-blur-md shadow-lg"
             title="Xóa gian hàng"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -758,14 +758,14 @@ function StoreCard({
       {selectMode ? (
         <div
           onClick={onToggleSelect}
-          className={`block rounded-3xl overflow-hidden bg-surface-elevated border transition-all duration-200 cursor-pointer shadow-md ${
+          className={`block rounded-3xl overflow-hidden glass-card transition-all duration-300 cursor-pointer ${
             isSelected
-              ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/50"
-              : "border-border-subtle hover:border-white/20"
+              ? "border-indigo-400 bg-indigo-500/15 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/25"
+              : "hover:border-white/20"
           }`}
         >
           {/* Cover Aspect Box */}
-          <div className="relative aspect-[4/3] bg-surface-overlay overflow-hidden">
+          <div className="relative aspect-[4/3] bg-black/40 overflow-hidden">
             {store.cover_url ? (
               <img
                 src={store.cover_url}
@@ -774,23 +774,23 @@ function StoreCard({
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-indigo-900/60 via-purple-950/60 to-slate-900 flex flex-col items-center justify-center p-2 text-center">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-black text-indigo-300 text-base shadow-inner border border-white/15 mb-1">
+              <div className="w-full h-full bg-gradient-to-br from-indigo-950/80 via-purple-950/70 to-slate-950 flex flex-col items-center justify-center p-2 text-center">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-black text-indigo-300 text-base shadow-inner border border-white/20 mb-1">
                   {storeInitials}
                 </div>
-                <span className="text-[9px] font-semibold text-white/30">Chưa có ảnh bìa</span>
+                <span className="text-[9px] font-semibold text-white/40">Chưa có ảnh bìa</span>
               </div>
             )}
 
             {/* Checkbox Badge Overlay */}
-            <div className={`absolute top-2.5 left-2.5 w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
-              isSelected ? "bg-indigo-600 text-white shadow-lg" : "border-2 border-white/40 bg-black/50"
+            <div className={`absolute top-2.5 left-2.5 w-6 h-6 rounded-xl flex items-center justify-center transition-all ${
+              isSelected ? "bg-indigo-600 text-white shadow-lg" : "border-2 border-white/40 bg-black/50 backdrop-blur-md"
             }`}>
               {isSelected && <Check className="w-4 h-4" />}
             </div>
 
             {/* Photo Count Badge */}
-            <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg">
+            <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[10px] font-extrabold text-white flex items-center gap-1 shadow-lg">
               <ImageIcon className="w-3 h-3 text-indigo-400" />
               <span>{store.total_items}</span>
             </div>
@@ -798,11 +798,11 @@ function StoreCard({
 
           {/* Store Title & Badges */}
           <div className="p-3.5">
-            <h3 className="text-sm font-bold text-white truncate">
+            <h3 className="text-sm font-extrabold text-white truncate">
               {store.name}
             </h3>
             {store.note && (
-              <p className="text-[10px] text-white/40 truncate mt-0.5">
+              <p className="text-[10px] text-white/50 truncate mt-0.5">
                 {store.note}
               </p>
             )}
@@ -813,49 +813,49 @@ function StoreCard({
         <Link
           href={`/stores/${store.id}`}
           prefetch={true}
-          className="block rounded-3xl overflow-hidden bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-2xl hover:-translate-y-1"
+          className="block rounded-3xl overflow-hidden glass-card hover:border-indigo-400/50 hover:bg-white/[0.08] transition-all duration-300 active:scale-[0.98]"
         >
-        {/* Cover Aspect Box */}
-        <div className="relative aspect-[4/3] bg-surface-overlay overflow-hidden">
-          {store.cover_url ? (
-            <img
-              src={store.cover_url}
-              alt={store.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-900/60 via-purple-950/60 to-slate-900 flex flex-col items-center justify-center p-2 text-center">
-              <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-black text-indigo-300 text-base shadow-inner border border-white/15 mb-1">
-                {storeInitials}
+          {/* Cover Aspect Box */}
+          <div className="relative aspect-[4/3] bg-black/40 overflow-hidden">
+            {store.cover_url ? (
+              <img
+                src={store.cover_url}
+                alt={store.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-indigo-950/80 via-purple-950/70 to-slate-950 flex flex-col items-center justify-center p-2 text-center">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-black text-indigo-300 text-base shadow-inner border border-white/20 mb-1">
+                  {storeInitials}
+                </div>
+                <span className="text-[9px] font-semibold text-white/40">Chưa có ảnh bìa</span>
               </div>
-              <span className="text-[9px] font-semibold text-white/30">Chưa có ảnh bìa</span>
+            )}
+
+            {/* Photo Count Badge */}
+            <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[10px] font-extrabold text-white flex items-center gap-1 shadow-lg">
+              <ImageIcon className="w-3 h-3 text-indigo-400" />
+              <span>{store.total_items}</span>
             </div>
-          )}
-
-          {/* Photo Count Badge */}
-          <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg">
-            <ImageIcon className="w-3 h-3 text-indigo-400" />
-            <span>{store.total_items}</span>
           </div>
-        </div>
 
-        {/* Store Title & Badges */}
-        <div className="p-3.5">
-          <h3 className="text-sm font-bold text-white truncate group-hover:text-indigo-300 transition-colors">
-            {store.name}
-          </h3>
+          {/* Store Title & Badges */}
+          <div className="p-3.5">
+            <h3 className="text-sm font-extrabold text-white truncate group-hover:text-indigo-300 transition-colors">
+              {store.name}
+            </h3>
 
-          {store.note && (
-            <p className="text-[10px] text-white/40 truncate mt-0.5">
-              {store.note}
-            </p>
-          )}
+            {store.note && (
+              <p className="text-[10px] text-white/50 truncate mt-0.5">
+                {store.note}
+              </p>
+            )}
 
-          {/* Status Breakdown Pills */}
-          <StoreStatusBreakdown store={store} />
-        </div>
-      </Link>
+            {/* Status Breakdown Pills */}
+            <StoreStatusBreakdown store={store} />
+          </div>
+        </Link>
       )}
 
       {/* Admin Delete Button */}
@@ -866,7 +866,7 @@ function StoreCard({
             e.stopPropagation();
             onDelete();
           }}
-          className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full bg-rose-600/90 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold shadow-lg hover:bg-rose-700 active:scale-90"
+          className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full bg-rose-600/90 backdrop-blur-md border border-white/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold shadow-lg hover:bg-rose-700 active:scale-90"
           title="Xóa gian hàng"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -875,3 +875,4 @@ function StoreCard({
     </div>
   );
 }
+

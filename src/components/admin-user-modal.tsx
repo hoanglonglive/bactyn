@@ -154,26 +154,26 @@ export function AdminUserModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+        className="absolute inset-0 bg-black/85 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Modal Window */}
-      <div className="relative w-full max-w-lg max-h-[85dvh] rounded-3xl bg-surface-elevated border border-border-subtle flex flex-col shadow-2xl animate-fade-in">
+      <div className="relative w-full max-w-lg max-h-[85dvh] rounded-3xl glass-modal flex flex-col animate-fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/10">
           <div>
-            <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+            <h2 className="text-base font-extrabold text-white flex items-center gap-2 drop-shadow-sm">
               <Users className="w-5 h-5 text-indigo-400" />
               Quản lý tài khoản người dùng
             </h2>
-            <p className="text-[11px] text-white/40 mt-0.5">
+            <p className="text-[11px] font-medium text-white/50 mt-0.5">
               Phân quyền Admin / Nhân viên & Xóa người dùng trong hệ thống
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-all active:scale-95"
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all active:scale-95 border border-white/10"
           >
             <X className="w-5 h-5" />
           </button>
@@ -181,13 +181,13 @@ export function AdminUserModal({
 
         {/* Alerts */}
         {errorMsg && (
-          <div className="mx-6 mt-3 px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-400 flex items-center gap-2">
+          <div className="mx-6 mt-3.5 px-4 py-2.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-xs font-bold text-rose-300 flex items-center gap-2 backdrop-blur-md">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
         {successMsg && (
-          <div className="mx-6 mt-3 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 flex items-center gap-2">
+          <div className="mx-6 mt-3.5 px-4 py-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-2 backdrop-blur-md">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             <span>{successMsg}</span>
           </div>
@@ -196,17 +196,17 @@ export function AdminUserModal({
         {/* Search Input */}
         <div className="px-6 pt-4 pb-2">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo email hoặc họ tên..."
-              className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-surface border border-border-subtle text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner"
+              className="w-full pl-11 pr-10 py-3 rounded-2xl glass-input text-xs text-white placeholder-white/30 focus:outline-none transition-all shadow-inner"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-1"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -214,11 +214,11 @@ export function AdminUserModal({
           </div>
 
           {/* Server Storage Cleanup Tools */}
-          <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button
               onClick={() => setShowPurgeConfirm(true)}
               disabled={purging}
-              className="py-2.5 px-3 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/35 text-xs font-extrabold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-rose-500/10"
+              className="py-3 px-3 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-extrabold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-rose-500/15 backdrop-blur-md"
               title="Xóa ngay lập tức tất cả ảnh đơn hàng đã giao để giải phóng bộ nhớ server & cache điện thoại"
             >
               {purging ? (
@@ -232,7 +232,7 @@ export function AdminUserModal({
             <button
               onClick={handleManualCleanup}
               disabled={cleaning}
-              className="py-2.5 px-3 rounded-2xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+              className="py-3 px-3 rounded-2xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/35 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-md backdrop-blur-md"
               title="Quét và xóa ảnh đã giao hoặc hết hàng quá 14 ngày để giải phóng bộ nhớ"
             >
               {cleaning ? (
@@ -246,10 +246,10 @@ export function AdminUserModal({
         </div>
 
         {/* Users List */}
-        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-2.5">
+        <div className="flex-1 overflow-y-auto px-6 py-3 space-y-2.5">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Loader2 className="w-7 h-7 text-indigo-400 animate-spin mb-2" />
+              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" />
               <p className="text-xs text-white/40">Đang tải danh sách người dùng...</p>
             </div>
           ) : filteredUsers.length === 0 ? (
@@ -266,22 +266,22 @@ export function AdminUserModal({
               return (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-surface/70 border border-border-subtle hover:border-white/20 transition-all"
+                  className="flex items-center justify-between gap-3 p-3.5 rounded-2xl glass-card transition-all"
                 >
                   {/* User Profile Info */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 shadow-md border border-white/10">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center font-black text-white text-sm flex-shrink-0 shadow-md border border-white/20">
                       {user.full_name
                         ? user.full_name.substring(0, 1).toUpperCase()
                         : user.email.substring(0, 1).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-bold text-white truncate">
+                        <p className="text-xs font-extrabold text-white truncate">
                           {user.full_name || "Thành viên"}
                         </p>
                         {isSelf && (
-                          <span className="text-[9px] font-bold text-indigo-300 bg-indigo-500/20 px-1.5 py-0.2 rounded border border-indigo-500/30">
+                          <span className="text-[9px] font-extrabold text-indigo-300 bg-indigo-500/25 px-2 py-0.5 rounded-full border border-indigo-500/40">
                             Bạn
                           </span>
                         )}
@@ -298,10 +298,10 @@ export function AdminUserModal({
                     <button
                       onClick={() => handleRoleToggle(user)}
                       disabled={isUpdating || isSelf}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
                         isAdminRole
-                          ? "bg-amber-400/15 text-amber-300 border-amber-400/30 hover:bg-amber-400/25 shadow-amber-400/10 shadow-sm"
-                          : "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/25"
+                          ? "bg-amber-400/20 text-amber-300 border-amber-400/40 hover:bg-amber-400/30 shadow-amber-400/10 shadow-sm"
+                          : "bg-indigo-500/20 text-indigo-300 border-indigo-500/35 hover:bg-indigo-500/30"
                       }`}
                       title={isSelf ? "Bạn không thể hạ quyền của chính mình" : "Nhấn để đổi quyền"}
                     >
@@ -324,7 +324,7 @@ export function AdminUserModal({
                     {!isSelf && (
                       <button
                         onClick={() => setDeleteTarget(user)}
-                        className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 border border-rose-500/20 transition-all active:scale-95"
+                        className="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all active:scale-95"
                         title="Xóa người dùng"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
