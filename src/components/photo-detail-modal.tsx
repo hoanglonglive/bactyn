@@ -14,9 +14,26 @@ import {
   Lock,
   Eye,
   FileText,
+  Clock,
 } from "lucide-react";
 import type { OrderItem, OrderStatus } from "@/lib/types";
 import { STATUS_CONFIG } from "@/lib/types";
+
+function formatUploadedAt(isoString?: string) {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "";
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${hours}:${minutes} - ${day}/${month}/${year}`;
+  } catch {
+    return "";
+  }
+}
 import {
   updatePhotoStatus,
   updatePhotoInfo,
@@ -406,9 +423,17 @@ export function PhotoDetailModal({
         {/* Editable Details Form */}
         {!expandedImage && (
           <div className="p-4 space-y-3 max-w-lg mx-auto w-full">
-            <p className="text-[11px] font-black text-white/50 uppercase tracking-wider">
-              Chi tiết thông tin đơn hàng
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-black text-white/50 uppercase tracking-wider">
+                Chi tiết thông tin đơn hàng
+              </p>
+              {currentPhoto.created_at && (
+                <p className="text-[10px] font-extrabold text-amber-300 flex items-center gap-1 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
+                  <Clock className="w-3 h-3 text-amber-400" />
+                  <span>Đăng lúc: {formatUploadedAt(currentPhoto.created_at)}</span>
+                </p>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>

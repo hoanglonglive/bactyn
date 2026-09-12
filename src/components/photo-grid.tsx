@@ -1,8 +1,24 @@
 "use client";
 
-import { ImageIcon, FileText, Check } from "lucide-react";
+import { ImageIcon, FileText, Check, Clock } from "lucide-react";
 import type { OrderItem } from "@/lib/types";
 import { STATUS_CONFIG } from "@/lib/types";
+
+function formatUploadedAt(isoString?: string) {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "";
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
+  } catch {
+    return "";
+  }
+}
 
 interface Props {
   items: OrderItem[];
@@ -128,6 +144,12 @@ export function PhotoGrid({
                         📝 {item.note}
                       </span>
                     )}
+                    {item.created_at && (
+                      <span className="text-[9px] font-bold text-white/50 flex items-center gap-1 ml-auto bg-black/40 px-2 py-0.5 rounded-md">
+                        <Clock className="w-2.5 h-2.5 text-amber-400" />
+                        <span>{formatUploadedAt(item.created_at)}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>
@@ -208,40 +230,44 @@ export function PhotoGrid({
               )}
 
               {/* Info Overlay */}
-              {(item.order_code || item.customer_name || item.size || item.color || item.note) && (
-                <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col justify-end pointer-events-none">
-                  {item.order_code && (
-                    <p className="text-xs font-black text-white truncate drop-shadow-md">
-                      #{item.order_code}
-                    </p>
-                  )}
-                  {item.customer_name && (
-                    <p className="text-[10px] font-semibold text-white/85 truncate">
-                      {item.customer_name}
-                    </p>
-                  )}
-                  {(item.size || item.color) && (
-                    <div className="flex items-center gap-1 mt-1 flex-wrap">
-                      {item.size && (
-                        <span className="text-[9px] font-bold bg-white/20 backdrop-blur-md px-1.5 py-0.2 rounded text-white shadow-sm">
-                          {item.size}
-                        </span>
-                      )}
-                      {item.color && (
-                        <span className="text-[9px] font-bold bg-white/20 backdrop-blur-md px-1.5 py-0.2 rounded text-white truncate max-w-[65px] shadow-sm">
-                          {item.color}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {item.note && (
-                    <p className="text-[10px] font-semibold text-amber-300 truncate mt-1 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg border border-amber-400/30 shadow-md">
-                      <FileText className="w-2.5 h-2.5 flex-shrink-0 text-amber-400" />
-                      <span className="truncate">{item.note}</span>
-                    </p>
-                  )}
-                </div>
-              )}
+              <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col justify-end pointer-events-none">
+                {item.order_code && (
+                  <p className="text-xs font-black text-white truncate drop-shadow-md">
+                    #{item.order_code}
+                  </p>
+                )}
+                {item.customer_name && (
+                  <p className="text-[10px] font-semibold text-white/85 truncate">
+                    {item.customer_name}
+                  </p>
+                )}
+                {(item.size || item.color) && (
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    {item.size && (
+                      <span className="text-[9px] font-bold bg-white/20 backdrop-blur-md px-1.5 py-0.2 rounded text-white shadow-sm">
+                        {item.size}
+                      </span>
+                    )}
+                    {item.color && (
+                      <span className="text-[9px] font-bold bg-white/20 backdrop-blur-md px-1.5 py-0.2 rounded text-white truncate max-w-[65px] shadow-sm">
+                        {item.color}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {item.note && (
+                  <p className="text-[10px] font-semibold text-amber-300 truncate mt-1 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg border border-amber-400/30 shadow-md">
+                    <FileText className="w-2.5 h-2.5 flex-shrink-0 text-amber-400" />
+                    <span className="truncate">{item.note}</span>
+                  </p>
+                )}
+                {item.created_at && (
+                  <p className="text-[9px] font-bold text-white/60 truncate mt-1 flex items-center gap-1 drop-shadow-sm">
+                    <Clock className="w-2.5 h-2.5 flex-shrink-0 text-amber-400" />
+                    <span>{formatUploadedAt(item.created_at)}</span>
+                  </p>
+                )}
+              </div>
             </button>
           </div>
         );
