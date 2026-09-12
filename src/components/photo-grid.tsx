@@ -40,7 +40,7 @@ export function PhotoGrid({
       <div className="flex flex-col gap-2.5">
         {items.map((item, i) => {
           const statusConfig = STATUS_CONFIG[item.status];
-          const displayImg = item.thumbnail_url || item.image_url;
+          const displayImg = item.image_url || item.thumbnail_url;
           const isSelected = selectedIds.has(item.id);
 
           return (
@@ -136,7 +136,7 @@ export function PhotoGrid({
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
       {items.map((item, i) => {
         const statusConfig = STATUS_CONFIG[item.status];
-        const displayImg = item.thumbnail_url || item.image_url;
+        const displayImg = item.image_url || item.thumbnail_url;
         const isSelected = selectedIds.has(item.id);
 
         return (

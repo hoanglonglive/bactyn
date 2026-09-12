@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   X,
   Trash2,
@@ -136,6 +136,48 @@ export function PhotoDetailModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handlePrev, handleNext, onClose]);
 
+  // Mobile Touch Swipe Gesture Handler (Left/Right to Navigate, Up/Down to Close)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.changedTouches.length === 0) return;
+
+    const startX = touchStartRef.current.x;
+    const startY = touchStartRef.current.y;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+
+    const deltaX = endX - startX;
+    const deltaY = endY - startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    const minSwipeDistance = 45; // threshold in pixels
+
+    if (absX > absY && absX > minSwipeDistance) {
+      // Horizontal swipe
+      if (deltaX < 0 && hasNext) {
+        handleNext(); // Swipe Left -> Next Photo
+      } else if (deltaX > 0 && hasPrev) {
+        handlePrev(); // Swipe Right -> Prev Photo
+      }
+    } else if (absY > absX && absY > minSwipeDistance) {
+      // Vertical swipe (Up or Down) -> Close modal back to store list
+      onClose();
+    }
+
+    touchStartRef.current = null;
+  };
+
   async function handleStatusChange(newStatus: OrderStatus) {
     // Check staff permissions
     if (!isAdmin && !STAFF_ALLOWED_STATUSES.includes(newStatus)) {
@@ -259,8 +301,10 @@ export function PhotoDetailModal({
       <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Full Mobile Screenshot Container (Optimized 9:16 Aspect Ratio View) */}
         <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           className={cn(
-            "relative flex-1 flex items-center justify-center p-2 group transition-all duration-300",
+            "relative flex-1 flex items-center justify-center p-2 group transition-all duration-300 select-none",
             expandedImage ? "min-h-[80dvh] max-h-[88dvh]" : "min-h-[480px] max-h-[72dvh]"
           )}
         >
