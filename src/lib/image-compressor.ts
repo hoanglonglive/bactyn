@@ -14,22 +14,22 @@ export async function compressImage(file: File): Promise<CompressedResult> {
   const timestamp = Date.now();
   const baseName = file.name.replace(/\.[^/.]+$/, "");
 
-  // Generate both independent variants concurrently using Web Workers.
-  // High quality screenshot options (preserving small text, prices & order codes):
+  // Balanced screenshot compression options:
+  // Sharp & clear text readability, optimized for ultra-fast mobile loading & performance.
   const fullOptions = {
-    maxSizeMB: 1.5, // Ultra sharp detail for screenshots (up to 1.5MB)
-    maxWidthOrHeight: 2800, // Preserves native phone screenshot heights (e.g. 2796px / 3088px)
+    maxSizeMB: 0.35, // ~250KB - 350KB target max for fast modal loading
+    maxWidthOrHeight: 1800, // 1800px max height preserves text sharpness on mobile screenshots
     useWebWorker: true,
     fileType: "image/webp" as const,
-    initialQuality: 0.95, // 95% quality preserves sharp vector-like text contrast
+    initialQuality: 0.88, // 88% WebP quality prevents blur while keeping file size small
   };
 
   const thumbOptions = {
-    maxSizeMB: 0.35, // Crisp 3x Retina display thumbnail (~350KB)
-    maxWidthOrHeight: 1000,
+    maxSizeMB: 0.08, // ~60KB - 80KB target max for instant grid/list scrolling
+    maxWidthOrHeight: 800,
     useWebWorker: true,
     fileType: "image/webp" as const,
-    initialQuality: 0.88,
+    initialQuality: 0.78,
   };
 
   const [fullBlob, thumbBlob] = await Promise.all([
@@ -52,18 +52,18 @@ export async function compressImage(file: File): Promise<CompressedResult> {
 
 /**
  * Compresses a cover image for store albums.
- * Max 1400px width, high quality
+ * Max 1000px width, ~180KB max
  */
 export async function compressCoverImage(file: File): Promise<File> {
   const timestamp = Date.now();
   const baseName = file.name.replace(/\.[^/.]+$/, "");
 
   const options = {
-    maxSizeMB: 0.6,
-    maxWidthOrHeight: 1400,
+    maxSizeMB: 0.18,
+    maxWidthOrHeight: 1000,
     useWebWorker: true,
     fileType: "image/webp" as const,
-    initialQuality: 0.92,
+    initialQuality: 0.82,
   };
 
   const blob = await imageCompression(file, options);
