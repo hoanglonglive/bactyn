@@ -8,7 +8,7 @@ export interface CompressedResult {
 /**
  * Compresses an image file into two WebP variants:
  * 1. Full-size: max 1200px width, < 200KB
- * 2. Thumbnail: max 300px width, < 30KB
+ * 2. Thumbnail: max 600px width, < 60KB
  */
 export async function compressImage(file: File): Promise<CompressedResult> {
   const timestamp = Date.now();
@@ -25,11 +25,11 @@ export async function compressImage(file: File): Promise<CompressedResult> {
   };
 
   const thumbOptions = {
-    maxSizeMB: 0.028, // ~30KB
-    maxWidthOrHeight: 300,
+    maxSizeMB: 0.058, // ~60KB, sharp on high-DPI phone screens
+    maxWidthOrHeight: 600,
     useWebWorker: true,
     fileType: "image/webp" as const,
-    initialQuality: 0.6,
+    initialQuality: 0.72,
   };
 
   const [fullBlob, thumbBlob] = await Promise.all([

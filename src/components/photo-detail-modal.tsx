@@ -202,9 +202,9 @@ export function PhotoDetailModal({
       </div>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col overflow-y-auto">
+      <div className="flex-1 min-h-0 flex flex-col overflow-y-auto lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] lg:overflow-hidden">
         {/* Image Preview Container with Arrow Controls */}
-        <div className="relative flex-1 flex items-center justify-center p-2 min-h-[360px] max-h-[55dvh] group">
+        <div className="relative flex items-center justify-center p-2 h-[calc(100dvh-57px)] min-h-[calc(100dvh-57px)] shrink-0 group lg:h-full lg:min-h-0 lg:p-4">
           {/* Previous Arrow */}
           {hasPrev && (
             <button
@@ -231,7 +231,7 @@ export function PhotoDetailModal({
             src={currentPhoto.thumbnail_url}
             alt=""
             aria-hidden="true"
-            className={`absolute inset-2 w-[calc(100%-1rem)] h-[calc(100%-1rem)] rounded-2xl object-contain blur-sm transition-opacity duration-150 ${
+            className={`absolute inset-2 w-[calc(100%-1rem)] h-[calc(100%-1rem)] rounded-2xl object-contain blur-[2px] transition-opacity duration-150 lg:inset-4 lg:w-[calc(100%-2rem)] lg:h-[calc(100%-2rem)] ${
               imageLoaded ? "opacity-0" : "opacity-100"
             }`}
           />
@@ -243,7 +243,7 @@ export function PhotoDetailModal({
             decoding="async"
             fetchPriority="high"
             onLoad={() => setImageLoaded(true)}
-            className={`relative w-full h-full rounded-2xl object-contain shadow-2xl transition-opacity duration-150 ${
+            className={`relative w-full h-full max-w-full max-h-full rounded-2xl object-contain shadow-2xl transition-opacity duration-150 ${
               imageLoaded ? "opacity-100" : "opacity-0"
             }`}
           />
@@ -259,8 +259,9 @@ export function PhotoDetailModal({
           </a>
         </div>
 
+        <div className="lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-white/10">
         {/* Status Selector Bar (1-Click Instant Upgrade) */}
-        <div className="px-4 py-3 bg-surface/50 border-y border-white/10">
+        <div className="px-4 py-3 bg-surface/50 border-y border-white/10 lg:border-t-0">
           <p className="text-[11px] font-semibold text-white/40 mb-2 uppercase tracking-wider">
             Trạng thái đơn hàng
           </p>
@@ -369,6 +370,7 @@ export function PhotoDetailModal({
               Đang tự động lưu...
             </p>
           )}
+        </div>
         </div>
       </div>
 

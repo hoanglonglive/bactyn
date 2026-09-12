@@ -40,13 +40,13 @@ export function PhotoGrid({ items, onPhotoClick }: Props) {
               className="group relative w-full rounded-2xl overflow-hidden bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 block text-left transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-xl"
             >
               {/* Photo Image */}
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-overlay">
+              <div className="relative aspect-[9/16] w-full overflow-hidden bg-black/30">
                 <img
-                  src={item.thumbnail_url}
+                  src={item.image_url}
                   alt={item.order_code || "Order photo"}
-                  width={300}
-                  height={400}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
+                  width={675}
+                  height={1200}
+                  className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-300 ease-out"
                   loading={i < 6 ? "eager" : "lazy"}
                   fetchPriority={i < 6 ? "high" : "auto"}
                   decoding="async"
