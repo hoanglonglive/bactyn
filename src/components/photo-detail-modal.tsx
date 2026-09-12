@@ -161,17 +161,18 @@ export function PhotoDetailModal({
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
 
-    const minSwipeDistance = 45; // threshold in pixels
+    const minHorizontalSwipe = 50; // Threshold in px for left/right photo navigation
+    const minVerticalSwipe = 110;  // Deliberate threshold in px for vertical close gesture
 
-    if (absX > absY && absX > minSwipeDistance) {
-      // Horizontal swipe
+    if (absX > absY * 1.2 && absX > minHorizontalSwipe) {
+      // Horizontal swipe (Left / Right)
       if (deltaX < 0 && hasNext) {
         handleNext(); // Swipe Left -> Next Photo
       } else if (deltaX > 0 && hasPrev) {
         handlePrev(); // Swipe Right -> Prev Photo
       }
-    } else if (absY > absX && absY > minSwipeDistance) {
-      // Vertical swipe (Up or Down) -> Close modal back to store list
+    } else if (absY > absX * 1.5 && absY > minVerticalSwipe) {
+      // Deliberate vertical swipe (Up or Down) -> Close modal back to store list
       onClose();
     }
 
