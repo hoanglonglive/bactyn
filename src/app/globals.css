@@ -57,15 +57,14 @@
   scrollbar-width: none;
 }
 
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-  -webkit-tap-highlight-color: transparent;
+html, body {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 body {
-  background-color: #050505;
-  background-image: url('/app-bg.png');
+  background-color: #000000;
+  background-image: url('/backgroundss.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
