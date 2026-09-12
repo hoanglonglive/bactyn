@@ -136,7 +136,26 @@ export async function getStores() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return { error: error.message, data: null };
+    // Fallback directly to stores table if view is unavailable
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("stores")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (fallbackError) {
+      return { error: fallbackError.message, data: null };
+    }
+
+    const storesFormatted = (fallbackData || []).map((s) => ({
+      ...s,
+      total_items: 0,
+      purchased_count: 0,
+      pending_count: 0,
+      delivered_count: 0,
+      out_of_stock_count: 0,
+    }));
+
+    return { data: storesFormatted, error: null };
   }
 
   return { data, error: null };
