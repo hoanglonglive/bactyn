@@ -18,7 +18,10 @@ import {
   updateUserRole,
   deleteUserAccount,
 } from "@/app/actions/admin-actions";
-import { cleanupExpiredCompletedOrders } from "@/app/actions/cleanup-actions";
+import {
+  cleanupExpiredCompletedOrders,
+  purgeAllDeliveredOrdersNow,
+} from "@/app/actions/cleanup-actions";
 
 interface Props {
   currentUserId?: string;
@@ -38,6 +41,8 @@ export function AdminUserModal({
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [cleaning, setCleaning] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -57,6 +62,25 @@ export function AdminUserModal({
     }
 
     setCleaning(false);
+  }
+
+  async function handlePurgeDeliveredNow() {
+    setPurging(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    setShowPurgeConfirm(false);
+
+    const result = await purgeAllDeliveredOrdersNow();
+
+    if (result.error) {
+      setErrorMsg(`Lỗi dọn dẹp: ${result.error}`);
+    } else if (result.deletedCount > 0) {
+      setSuccessMsg(`🔥 Đã xóa vĩnh viễn ${result.deletedCount} ảnh đơn hàng ĐÃ GIAO và dọn dẹp ${result.cleanedStorageFiles} file bộ nhớ máy chủ thành công!`);
+    } else {
+      setSuccessMsg("Hiện tại không có ảnh đơn hàng nào ở trạng thái ĐÃ GIAO để xóa.");
+    }
+
+    setPurging(false);
   }
 
   // Fetch users on mount
@@ -189,19 +213,36 @@ export function AdminUserModal({
             )}
           </div>
 
-          <button
-            onClick={handleManualCleanup}
-            disabled={cleaning}
-            className="w-full mt-2.5 py-2.5 px-3 rounded-2xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
-            title="Quét và xóa ảnh đã giao hoặc hết hàng quá 14 ngày để giải phóng bộ nhớ"
-          >
-            {cleaning ? (
-              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
-            ) : (
-              <Trash2 className="w-4 h-4 text-indigo-400" />
-            )}
-            <span>Quét & Dọn dẹp ảnh cũ (&gt;14 ngày)</span>
-          </button>
+          {/* Server Storage Cleanup Tools */}
+          <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              onClick={() => setShowPurgeConfirm(true)}
+              disabled={purging}
+              className="py-2.5 px-3 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/35 text-xs font-extrabold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-rose-500/10"
+              title="Xóa ngay lập tức tất cả ảnh đơn hàng đã giao để giải phóng bộ nhớ server & cache điện thoại"
+            >
+              {purging ? (
+                <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
+              ) : (
+                <Trash2 className="w-4 h-4 text-rose-400" />
+              )}
+              <span>Xóa ảnh ĐÃ GIAO ngay</span>
+            </button>
+
+            <button
+              onClick={handleManualCleanup}
+              disabled={cleaning}
+              className="py-2.5 px-3 rounded-2xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+              title="Quét và xóa ảnh đã giao hoặc hết hàng quá 14 ngày để giải phóng bộ nhớ"
+            >
+              {cleaning ? (
+                <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+              ) : (
+                <Trash2 className="w-4 h-4 text-indigo-400" />
+              )}
+              <span>Dọn ảnh cũ (&gt;14 ngày)</span>
+            </button>
+          </div>
         </div>
 
         {/* Users List */}
@@ -328,6 +369,43 @@ export function AdminUserModal({
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Xóa người dùng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purge Delivered Confirmation Modal */}
+      {showPurgeConfirm && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowPurgeConfirm(false)}
+          />
+          <div className="relative w-full max-w-xs rounded-3xl bg-surface-elevated border border-border-subtle p-5 text-center shadow-2xl animate-fade-in">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center mb-3 border border-rose-500/30">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <p className="text-base font-extrabold text-white mb-1.5">
+              Xóa tất cả ảnh ĐÃ GIAO?
+            </p>
+            <p className="text-xs text-white/50 mb-5">
+              Hành động này sẽ xóa vĩnh viễn tất cả ảnh đơn hàng có trạng thái <strong className="text-rose-300">ĐÃ GIAO</strong> trên tất cả gian hàng để giải phóng dung lượng máy chủ. Thao tác không thể hoàn tác!
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPurgeConfirm(false)}
+                className="flex-1 rounded-2xl border border-border-subtle py-2.5 text-xs font-semibold text-white/70 hover:text-white transition-all active:scale-95"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handlePurgeDeliveredNow}
+                disabled={purging}
+                className="flex-1 rounded-2xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
+              >
+                {purging && <Loader2 className="w-4 h-4 animate-spin" />}
+                Xóa ngay
               </button>
             </div>
           </div>
