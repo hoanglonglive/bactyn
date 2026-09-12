@@ -208,8 +208,8 @@ export function PhotoGrid({
               )}
 
               {/* Info Overlay */}
-              {(item.order_code || item.customer_name || item.size || item.color) && (
-                <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col justify-end">
+              {(item.order_code || item.customer_name || item.size || item.color || item.note) && (
+                <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col justify-end pointer-events-none">
                   {item.order_code && (
                     <p className="text-xs font-black text-white truncate drop-shadow-md">
                       #{item.order_code}
@@ -233,6 +233,12 @@ export function PhotoGrid({
                         </span>
                       )}
                     </div>
+                  )}
+                  {item.note && (
+                    <p className="text-[10px] font-semibold text-amber-300 truncate mt-1 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg border border-amber-400/30 shadow-md">
+                      <FileText className="w-2.5 h-2.5 flex-shrink-0 text-amber-400" />
+                      <span className="truncate">{item.note}</span>
+                    </p>
                   )}
                 </div>
               )}
