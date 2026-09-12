@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { ArrowLeft, Camera, ShieldCheck, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Camera, ShieldCheck, Search, X, LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
 import type { Store, OrderItem, OrderStatus, Profile } from "@/lib/types";
 import { StatusFilter } from "./status-filter";
@@ -34,10 +35,12 @@ export function StoreDetail({
   profile,
   otherStores,
 }: Props) {
+  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [counts, setCounts] = useState(initialCounts);
   const [activeFilter, setActiveFilter] = useState<OrderStatus | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showUpload, setShowUpload] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<OrderItem | null>(null);
   const isAdmin = profile?.role === "admin";
@@ -66,15 +69,10 @@ export function StoreDetail({
     setActiveFilter(status);
   }, []);
 
-  const handleUploadComplete = useCallback((newItems: OrderItem[]) => {
-    setItems((prev) => [...newItems, ...prev]);
-    setCounts((prev) => ({
-      ...prev,
-      total: prev.total + newItems.length,
-      PENDING_ORDER: prev.PENDING_ORDER + newItems.length,
-    }));
+  const handleUploadComplete = useCallback(() => {
     setShowUpload(false);
-  }, []);
+    router.refresh();
+  }, [router]);
 
   const handleStatusUpdate = useCallback(
     (photoId: string, newStatus: OrderStatus) => {
@@ -155,7 +153,7 @@ export function StoreDetail({
               {store.name}
             </h1>
             <p className="text-[10px] text-white/40 flex items-center gap-1.5">
-              <span>{counts.total} ảnh đơn</span>
+              <span>Hiển thị {filteredItems.length} / {items.length} ảnh đơn</span>
               {isAdmin && (
                 <span className="inline-flex items-center gap-0.5 text-amber-400 font-semibold bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20">
                   <ShieldCheck className="w-3 h-3" />
@@ -166,9 +164,9 @@ export function StoreDetail({
           </div>
         </div>
 
-        {/* Instant Search Bar */}
-        <div className="px-4 pb-2">
-          <div className="relative">
+        {/* Instant Search Bar & View Mode Toggle */}
+        <div className="px-4 pb-2 flex items-center gap-2">
+          <div className="relative flex-1">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
             <input
               value={searchQuery}
@@ -185,6 +183,32 @@ export function StoreDetail({
               </button>
             )}
           </div>
+
+          {/* Grid / List Mode Toggle */}
+          <div className="flex items-center bg-surface-elevated rounded-xl p-1 border border-border-subtle shadow-sm flex-shrink-0">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === "grid"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-white/40 hover:text-white/70"
+              }`}
+              title="Xem dạng lưới"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === "list"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-white/40 hover:text-white/70"
+              }`}
+              title="Xem dạng danh sách"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Status Filter Chips */}
@@ -195,10 +219,11 @@ export function StoreDetail({
         />
       </header>
 
-      {/* Photo Grid */}
-      <main className="px-3 py-3 pb-28">
+      {/* Photo Grid / List View */}
+      <main className="px-3 py-3 pb-28 max-w-6xl mx-auto">
         <PhotoGrid
           items={filteredItems}
+          viewMode={viewMode}
           onPhotoClick={setSelectedPhoto}
         />
       </main>
@@ -223,7 +248,7 @@ export function StoreDetail({
         />
       )}
 
-      {/* Photo Detail Lightbox Modal with Full Prev/Next & Quick Navigation */}
+      {/* Photo Detail Lightbox Modal */}
       {selectedPhoto && (
         <PhotoDetailModal
           key={selectedPhoto.id}
