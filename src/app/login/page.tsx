@@ -2,21 +2,28 @@
 
 import { useState } from "react";
 import { login, signup } from "@/app/actions/auth-actions";
-import { Package, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Package, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [noticeMsg, setNoticeMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setError("");
+    setNoticeMsg("");
     try {
       const result = isSignUp ? await signup(formData) : await login(formData);
-      if (result?.error) {
-        setError(result.error);
+      if (result) {
+        if ("error" in result && typeof result.error === "string") {
+          setError(result.error);
+        } else if ("pendingApproval" in result && "message" in result && typeof result.message === "string") {
+          setNoticeMsg(result.message);
+          setIsSignUp(false);
+        }
       }
     } catch {
       // redirect throws, that's expected
@@ -117,6 +124,13 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {noticeMsg && (
+            <div className="rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-4 py-3 text-xs font-bold text-emerald-300 leading-relaxed flex items-start gap-2 backdrop-blur-md">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <span>{noticeMsg}</span>
+            </div>
+          )}
 
           {error && (
             <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-400">

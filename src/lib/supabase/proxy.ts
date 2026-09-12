@@ -44,5 +44,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (
+    user &&
+    !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/auth")
+  ) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_approved")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && !profile.is_approved && profile.role !== "admin") {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("pending", "1");
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }

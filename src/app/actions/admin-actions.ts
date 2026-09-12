@@ -114,3 +114,37 @@ export async function deleteUserAccount(targetUserId: string) {
   revalidatePath("/stores");
   return { success: true };
 }
+
+export async function toggleUserApproval(targetUserId: string, isApproved: boolean) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  // Check admin role
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (currentProfile?.role !== "admin") {
+    return { error: "Only admins can approve users" };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ is_approved: isApproved, updated_at: new Date().toISOString() })
+    .eq("id", targetUserId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/stores");
+  return { success: true };
+}

@@ -20,6 +20,27 @@ export async function login(formData: FormData) {
     return { error: error.message };
   }
 
+  // Check user approval status
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_approved")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && !profile.is_approved && profile.role !== "admin") {
+      await supabase.auth.signOut();
+      return {
+        error:
+          "Tài khoản của bạn đang chờ Admin phê duyệt trước khi có thể vào ứng dụng.",
+      };
+    }
+  }
+
   revalidatePath("/", "layout");
   redirect("/stores");
 }
@@ -49,6 +70,28 @@ export async function signup(formData: FormData) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Check user approval status
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_approved")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && !profile.is_approved && profile.role !== "admin") {
+      await supabase.auth.signOut();
+      return {
+        pendingApproval: true,
+        message:
+          "Đăng ký tài khoản thành công! Tài khoản của bạn đang chờ Admin phê duyệt trước khi có thể sử dụng ứng dụng.",
+      };
+    }
   }
 
   revalidatePath("/", "layout");

@@ -17,6 +17,7 @@ import {
   getAllUsers,
   updateUserRole,
   deleteUserAccount,
+  toggleUserApproval,
 } from "@/app/actions/admin-actions";
 import {
   cleanupExpiredCompletedOrders,
@@ -38,6 +39,7 @@ export function AdminUserModal({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [cleaning, setCleaning] = useState(false);
@@ -128,6 +130,31 @@ export function AdminUserModal({
     }
 
     setUpdatingId(null);
+  }
+
+  async function handleApprovalToggle(user: Profile) {
+    const newApprovalState = !user.is_approved;
+    setApprovingId(user.id);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    const result = await toggleUserApproval(user.id, newApprovalState);
+
+    if (result.error) {
+      setErrorMsg(result.error);
+    } else {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, is_approved: newApprovalState } : u))
+      );
+      setSuccessMsg(
+        newApprovalState
+          ? `Đã phê duyệt tài khoản ${user.email} thành công! 🎉`
+          : `Đã khóa quyền truy cập của ${user.email}`
+      );
+      if (onUserListChanged) onUserListChanged();
+    }
+
+    setApprovingId(null);
   }
 
   async function handleDeleteUser() {
@@ -276,13 +303,18 @@ export function AdminUserModal({
                         : user.email.substring(0, 1).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-xs font-extrabold text-white truncate">
                           {user.full_name || "Thành viên"}
                         </p>
                         {isSelf && (
                           <span className="text-[9px] font-extrabold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30">
                             Bạn
+                          </span>
+                        )}
+                        {!user.is_approved && !isAdminRole && (
+                          <span className="text-[9px] font-black text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
+                            Chờ duyệt ⏳
                           </span>
                         )}
                       </div>
@@ -292,8 +324,30 @@ export function AdminUserModal({
                     </div>
                   </div>
 
-                  {/* Actions & Role Toggle */}
+                  {/* Actions & Role / Approval Toggle */}
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Approval Toggle Button */}
+                    {!isAdminRole && !isSelf && (
+                      <button
+                        onClick={() => handleApprovalToggle(user)}
+                        disabled={approvingId === user.id}
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 ${
+                          user.is_approved
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30"
+                            : "bg-gradient-to-r from-amber-400 to-yellow-500 text-black border-amber-400 font-extrabold shadow-md hover:brightness-110"
+                        }`}
+                        title={user.is_approved ? "Đã duyệt - Bấm để tạm khóa" : "Chưa duyệt - Bấm để phê duyệt ngay"}
+                      >
+                        {approvingId === user.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : user.is_approved ? (
+                          <span>Đã duyệt ✅</span>
+                        ) : (
+                          <span>Phê duyệt ⚡</span>
+                        )}
+                      </button>
+                    )}
+
                     {/* Role Toggle Button */}
                     <button
                       onClick={() => handleRoleToggle(user)}

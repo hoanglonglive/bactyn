@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     avatar_url  TEXT,
     role        TEXT NOT NULL DEFAULT 'staff'
                 CHECK (role IN ('admin', 'staff')),
+    is_approved BOOLEAN NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -151,13 +152,14 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    INSERT INTO public.profiles (id, email, full_name, avatar_url, role)
+    INSERT INTO public.profiles (id, email, full_name, avatar_url, role, is_approved)
     VALUES (
         NEW.id,
         NEW.email,
         COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.email),
         COALESCE(NEW.raw_user_meta_data ->> 'avatar_url', ''),
-        COALESCE(NEW.raw_user_meta_data ->> 'role', 'staff')  -- Default to staff
+        COALESCE(NEW.raw_user_meta_data ->> 'role', 'staff'),
+        CASE WHEN COALESCE(NEW.raw_user_meta_data ->> 'role', 'staff') = 'admin' THEN TRUE ELSE FALSE END
     );
     RETURN NEW;
 END;
