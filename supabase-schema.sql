@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     size            TEXT DEFAULT '',
     color           TEXT DEFAULT '',
     note            TEXT DEFAULT '',
+    display_order   INT DEFAULT 0,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by      UUID NOT NULL REFERENCES auth.users(id) ON DELETE SET NULL

@@ -54,6 +54,7 @@ export interface OrderItem {
   size: string;
   color: string;
   note: string;
+  display_order?: number;
   created_at: string;
   updated_at: string;
   created_by: string;

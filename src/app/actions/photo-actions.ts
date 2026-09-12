@@ -394,8 +394,9 @@ export async function getStoreItems(
 
   let query = supabase
     .from("order_items")
-    .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, created_at, updated_at, created_by")
+    .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, display_order, created_at, updated_at, created_by")
     .eq("store_id", storeId)
+    .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (statusFilter) {
@@ -477,7 +478,8 @@ export async function getAllOrderItems(statusFilter?: OrderStatus | null) {
 
   let query = supabase
     .from("order_items")
-    .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, created_at, updated_at, created_by, stores(id, name)")
+    .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, display_order, created_at, updated_at, created_by, stores(id, name)")
+    .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (statusFilter) {
@@ -490,7 +492,8 @@ export async function getAllOrderItems(statusFilter?: OrderStatus | null) {
     // Fallback if relation syntax varies
     const { data: fallbackData, error: fallbackErr } = await supabase
       .from("order_items")
-      .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, created_at, updated_at, created_by")
+      .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, display_order, created_at, updated_at, created_by")
+      .order("display_order", { ascending: true })
       .order("created_at", { ascending: false });
 
     if (fallbackErr) {
@@ -511,6 +514,107 @@ export async function getAllOrderItems(statusFilter?: OrderStatus | null) {
   return { data: formattedData, error: null };
 }
 
+export async function groupPhotosTogether(storeId: string, selectedPhotoIds: string[]) {
+  if (!selectedPhotoIds || selectedPhotoIds.length <= 1) {
+    return { success: true };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  // Fetch all photos in the store sorted by current order
+  const { data: storePhotos, error: fetchErr } = await supabase
+    .from("order_items")
+    .select("id, display_order, created_at")
+    .eq("store_id", storeId)
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (fetchErr || !storePhotos) {
+    return { error: fetchErr?.message || "Failed to fetch photos" };
+  }
+
+  const selectedSet = new Set(selectedPhotoIds);
+  const selectedItems = storePhotos.filter((p) => selectedSet.has(p.id));
+  const unselectedItems = storePhotos.filter((p) => !selectedSet.has(p.id));
+
+  // Find target insertion index: index of the first selected item in original array
+  let insertIndex = storePhotos.findIndex((p) => selectedSet.has(p.id));
+  if (insertIndex === -1) insertIndex = 0;
+
+  // Insert all selected items together at target index
+  const newOrderList: typeof storePhotos = [];
+  let unselectedIdx = 0;
+
+  for (let i = 0; i < storePhotos.length; i++) {
+    if (i === insertIndex) {
+      newOrderList.push(...selectedItems);
+    }
+    if (unselectedIdx < unselectedItems.length && !selectedSet.has(storePhotos[i].id)) {
+      newOrderList.push(unselectedItems[unselectedIdx]);
+      unselectedIdx++;
+    }
+  }
+
+  // Fallback: append any remaining unselected items
+  while (unselectedIdx < unselectedItems.length) {
+    newOrderList.push(unselectedItems[unselectedIdx]);
+    unselectedIdx++;
+  }
+
+  // Update display_order for all items in order
+  const updates = newOrderList.map((item, index) => ({
+    id: item.id,
+    display_order: index + 1,
+  }));
+
+  for (const update of updates) {
+    await supabase
+      .from("order_items")
+      .update({ display_order: update.display_order })
+      .eq("id", update.id);
+  }
+
+  revalidatePath(`/stores/${storeId}`);
+  revalidatePath("/stores");
+  return { success: true };
+}
+
+export async function updatePhotosOrder(
+  storeId: string,
+  photoOrders: { id: string; display_order: number }[]
+) {
+  if (!photoOrders || photoOrders.length === 0) {
+    return { success: true };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  for (const item of photoOrders) {
+    await supabase
+      .from("order_items")
+      .update({ display_order: item.display_order })
+      .eq("id", item.id);
+  }
+
+  revalidatePath(`/stores/${storeId}`);
+  revalidatePath("/stores");
+  return { success: true };
+}
+
 function extractStoragePath(publicUrl: string): string | null {
   if (!publicUrl) return null;
   const marker = "/object/public/order-photos/";
@@ -518,3 +622,4 @@ function extractStoragePath(publicUrl: string): string | null {
   if (idx === -1) return null;
   return publicUrl.substring(idx + marker.length);
 }
+

@@ -17,6 +17,8 @@ import {
   ChevronDown,
   Loader2,
   Edit3,
+  Layers,
+  GripVertical,
 } from "lucide-react";
 import Link from "next/link";
 import type { Store, OrderItem, OrderStatus, Profile } from "@/lib/types";
@@ -26,10 +28,12 @@ import { PhotoGrid } from "./photo-grid";
 import { PhotoUpload } from "./photo-upload";
 import { PhotoDetailModal } from "./photo-detail-modal";
 import { EditStoreDialog } from "./edit-store-dialog";
+import { ReorderPhotosDialog } from "./reorder-photos-dialog";
 import {
   bulkDeleteOrderPhotos,
   bulkUpdatePhotoStatus,
   bulkMovePhotosToStore,
+  groupPhotosTogether,
 } from "@/app/actions/photo-actions";
 
 interface StatusCounts {
@@ -96,6 +100,7 @@ export function StoreDetail({
   const [showBulkStatusMenu, setShowBulkStatusMenu] = useState(false);
   const [showBulkMoveModal, setShowBulkMoveModal] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [showReorderModal, setShowReorderModal] = useState(false);
   const [bulkProcessing, setBulkProcessing] = useState(false);
 
   const toggleSelectPhoto = useCallback((item: OrderItem) => {
@@ -160,6 +165,42 @@ export function StoreDetail({
       setSelectedIds(new Set());
       setSelectMode(false);
       setShowBulkDeleteModal(false);
+      router.refresh();
+    }
+    setBulkProcessing(false);
+  };
+
+  const handleGroupTogether = async () => {
+    if (selectedIds.size <= 1) return;
+    setBulkProcessing(true);
+    const ids = Array.from(selectedIds);
+    const result = await groupPhotosTogether(store.id, ids);
+    if (!result.error) {
+      const selectedSet = new Set(ids);
+      const selectedItems = items.filter((i) => selectedSet.has(i.id));
+      const unselectedItems = items.filter((i) => !selectedSet.has(i.id));
+      let insertIndex = items.findIndex((i) => selectedSet.has(i.id));
+      if (insertIndex === -1) insertIndex = 0;
+
+      const newItems: OrderItem[] = [];
+      let unselectedIdx = 0;
+      for (let i = 0; i < items.length; i++) {
+        if (i === insertIndex) {
+          newItems.push(...selectedItems);
+        }
+        if (unselectedIdx < unselectedItems.length && !selectedSet.has(items[i].id)) {
+          newItems.push(unselectedItems[unselectedIdx]);
+          unselectedIdx++;
+        }
+      }
+      while (unselectedIdx < unselectedItems.length) {
+        newItems.push(unselectedItems[unselectedIdx]);
+        unselectedIdx++;
+      }
+
+      setItems(newItems);
+      setSelectedIds(new Set());
+      setSelectMode(false);
       router.refresh();
     }
     setBulkProcessing(false);
@@ -279,14 +320,24 @@ export function StoreDetail({
             </div>
           </div>
 
-          <button
-            onClick={() => setShowEditStore(true)}
-            className="px-3 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 text-xs font-extrabold flex items-center gap-1.5 transition-all active:scale-95 backdrop-blur-md"
-            title="Sửa thông tin album gian hàng"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Sửa album</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowReorderModal(true)}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-extrabold flex items-center gap-1.5 transition-all active:scale-95 backdrop-blur-md"
+              title="Sắp xếp thứ tự ảnh đơn hàng"
+            >
+              <GripVertical className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Sắp xếp</span>
+            </button>
+            <button
+              onClick={() => setShowEditStore(true)}
+              className="px-3 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 text-xs font-extrabold flex items-center gap-1.5 transition-all active:scale-95 backdrop-blur-md"
+              title="Sửa thông tin album gian hàng"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Sửa album</span>
+            </button>
+          </div>
         </div>
 
         {/* Instant Search Bar & View Mode Toggle */}
@@ -437,6 +488,19 @@ export function StoreDetail({
               {selectedIds.size === filteredItems.length ? "Bỏ chọn" : "Tất cả"}
             </button>
 
+            {/* Group Selected Photos Button */}
+            {selectedIds.size > 1 && (
+              <button
+                onClick={handleGroupTogether}
+                disabled={bulkProcessing}
+                className="px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-extrabold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                title="Gom các ảnh được chọn hiển thị đứng cạnh nhau"
+              >
+                <Layers className="w-3.5 h-3.5 text-purple-400" />
+                <span>Gom gần nhau</span>
+              </button>
+            )}
+
             {/* Bulk Status Update Menu Button */}
             <div className="relative">
               <button
@@ -575,6 +639,19 @@ export function StoreDetail({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Reorder Photos Dialog */}
+      {showReorderModal && (
+        <ReorderPhotosDialog
+          storeId={store.id}
+          items={items}
+          onClose={() => setShowReorderModal(false)}
+          onSaved={(newOrderedItems) => {
+            setItems(newOrderedItems);
+            router.refresh();
+          }}
+        />
       )}
     </div>
   );
