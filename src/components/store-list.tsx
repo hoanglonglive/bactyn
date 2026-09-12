@@ -21,10 +21,14 @@ import {
   Square,
   Check,
   Loader2,
+  Edit3,
+  ListOrdered,
 } from "lucide-react";
 import type { StoreWithCounts, Profile, OrderItem, OrderStatus } from "@/lib/types";
 import { CreateStoreDialog } from "./create-store-dialog";
 import { DeleteStoreDialog } from "./delete-store-dialog";
+import { EditStoreDialog } from "./edit-store-dialog";
+import { ReorderStoresDialog } from "./reorder-stores-dialog";
 import { AdminUserModal } from "./admin-user-modal";
 import { StatusFilter } from "./status-filter";
 import { PhotoGrid } from "./photo-grid";
@@ -55,6 +59,8 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
   const [showCreate, setShowCreate] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StoreWithCounts | null>(null);
+  const [editTarget, setEditTarget] = useState<StoreWithCounts | null>(null);
+  const [showReorder, setShowReorder] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -381,6 +387,18 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
             </button>
           </div>
 
+          {/* Reorder Stores Button - Only for stores tab */}
+          {activeTab === "stores" && !activeStatusFilter && (
+            <button
+              onClick={() => setShowReorder(true)}
+              className="px-3.5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 glass-panel text-white/70 hover:text-white"
+              title="Sắp xếp vị trí hiển thị album"
+            >
+              <ListOrdered className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Sắp xếp album</span>
+            </button>
+          )}
+
           {/* Select Mode Toggle (Admin) - Only for stores tab */}
           {isAdmin && activeTab === "stores" && !activeStatusFilter && (
             <button
@@ -444,6 +462,7 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
                   selectMode={selectMode}
                   isSelected={selectedIds.has(store.id)}
                   onToggleSelect={() => toggleSelectStore(store.id)}
+                  onEdit={() => setEditTarget(store)}
                   onDelete={() => setDeleteTarget(store)}
                 />
               ))}
@@ -473,6 +492,18 @@ export function StoreList({ stores, profile, initialAllItems = [] }: StoreListPr
       {/* Dialogs */}
       {showCreate && (
         <CreateStoreDialog onClose={() => setShowCreate(false)} />
+      )}
+      {editTarget && (
+        <EditStoreDialog
+          store={editTarget}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
+      {showReorder && (
+        <ReorderStoresDialog
+          stores={filteredStores}
+          onClose={() => setShowReorder(false)}
+        />
       )}
       {deleteTarget && (
         <DeleteStoreDialog
@@ -618,6 +649,7 @@ function StoreCard({
   selectMode,
   isSelected,
   onToggleSelect,
+  onEdit,
   onDelete,
 }: {
   store: StoreWithCounts;
@@ -627,6 +659,7 @@ function StoreCard({
   selectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const storeInitials = store.name.substring(0, 2).toUpperCase();
@@ -732,20 +765,33 @@ function StoreCard({
           </Link>
         )}
 
-        {/* Admin Delete Button */}
-        {isAdmin && (
+        {/* Card Action Buttons (Edit / Delete) */}
+        <div className="absolute right-3.5 top-3.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onDelete();
+              onEdit();
             }}
-            className="absolute right-3.5 top-3.5 p-2 rounded-xl bg-rose-600/80 text-white hover:bg-rose-600 transition-all opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-lg"
-            title="Xóa gian hàng"
+            className="p-2 rounded-xl bg-amber-500/90 text-black hover:bg-amber-400 transition-all backdrop-blur-md shadow-lg"
+            title="Sửa album gian hàng"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Edit3 className="w-3.5 h-3.5" />
           </button>
-        )}
+          {isAdmin && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="p-2 rounded-xl bg-rose-600/90 text-white hover:bg-rose-600 transition-all backdrop-blur-md shadow-lg"
+              title="Xóa gian hàng"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -859,20 +905,33 @@ function StoreCard({
         </Link>
       )}
 
-      {/* Admin Delete Button */}
-      {isAdmin && (
+      {/* Card Action Buttons (Edit / Delete) */}
+      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onDelete();
+            onEdit();
           }}
-          className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full bg-rose-600/90 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold shadow-lg hover:bg-rose-700 active:scale-90"
-          title="Xóa gian hàng"
+          className="w-7 h-7 rounded-full bg-amber-400 text-black backdrop-blur-md flex items-center justify-center transition-all shadow-lg hover:bg-amber-300 active:scale-90"
+          title="Sửa album gian hàng"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Edit3 className="w-3.5 h-3.5" />
         </button>
-      )}
+        {isAdmin && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="w-7 h-7 rounded-full bg-rose-600/90 backdrop-blur-md flex items-center justify-center text-white text-xs font-bold shadow-lg hover:bg-rose-700 active:scale-90"
+            title="Xóa gian hàng"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

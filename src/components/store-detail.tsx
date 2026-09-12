@@ -16,6 +16,7 @@ import {
   Tag,
   ChevronDown,
   Loader2,
+  Edit3,
 } from "lucide-react";
 import Link from "next/link";
 import type { Store, OrderItem, OrderStatus, Profile } from "@/lib/types";
@@ -24,6 +25,7 @@ import { StatusFilter } from "./status-filter";
 import { PhotoGrid } from "./photo-grid";
 import { PhotoUpload } from "./photo-upload";
 import { PhotoDetailModal } from "./photo-detail-modal";
+import { EditStoreDialog } from "./edit-store-dialog";
 import {
   bulkDeleteOrderPhotos,
   bulkUpdatePhotoStatus,
@@ -56,6 +58,8 @@ export function StoreDetail({
   otherStores,
 }: Props) {
   const router = useRouter();
+  const [currentStore, setCurrentStore] = useState<Store>(store);
+  const [showEditStore, setShowEditStore] = useState(false);
   const [items, setItems] = useState(initialItems);
   const [counts, setCounts] = useState(initialCounts);
   const [activeFilter, setActiveFilter] = useState<OrderStatus | null>(null);
@@ -260,7 +264,7 @@ export function StoreDetail({
             </Link>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-black text-white truncate drop-shadow-sm">
-                {store.name}
+                {currentStore.name}
               </h1>
               <p className="text-[10px] font-medium text-white/50 flex items-center gap-1.5">
                 <span>Hiển thị {filteredItems.length} / {items.length} ảnh đơn</span>
@@ -273,6 +277,15 @@ export function StoreDetail({
               </p>
             </div>
           </div>
+
+          <button
+            onClick={() => setShowEditStore(true)}
+            className="px-3 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 text-xs font-extrabold flex items-center gap-1.5 transition-all active:scale-95 backdrop-blur-md"
+            title="Sửa thông tin album gian hàng"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Sửa album</span>
+          </button>
         </div>
 
         {/* Instant Search Bar & View Mode Toggle */}
@@ -368,6 +381,15 @@ export function StoreDetail({
         >
           <Camera className="w-6 h-6 text-black" />
         </button>
+      )}
+
+      {/* Edit Store Dialog */}
+      {showEditStore && (
+        <EditStoreDialog
+          store={currentStore}
+          onClose={() => setShowEditStore(false)}
+          onUpdated={(updated) => setCurrentStore(updated)}
+        />
       )}
 
       {/* Upload Modal */}

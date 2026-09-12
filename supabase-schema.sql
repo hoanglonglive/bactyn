@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS public.stores (
     name        TEXT NOT NULL,
     note        TEXT DEFAULT '',
     cover_url   TEXT DEFAULT '',
+    display_order INT DEFAULT 0,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by  UUID NOT NULL REFERENCES auth.users(id) ON DELETE SET NULL
@@ -211,6 +212,7 @@ SELECT
     s.name,
     s.note,
     s.cover_url,
+    s.display_order,
     s.created_at,
     s.updated_at,
     s.created_by,

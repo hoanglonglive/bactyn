@@ -23,6 +23,7 @@ export interface Store {
   name: string;
   note: string;
   cover_url: string;
+  display_order?: number;
   created_at: string;
   updated_at: string;
   created_by: string;

@@ -206,6 +206,7 @@ export async function getStores() {
   const { data, error } = await supabase
     .from("stores_with_counts")
     .select("*")
+    .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -247,6 +248,126 @@ export async function getStore(storeId: string) {
   }
 
   return { data, error: null };
+}
+
+export async function updateStore(storeId: string, formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  const name = formData.get("name") as string;
+  const note = (formData.get("note") as string) || "";
+  const coverFile = formData.get("cover") as File | null;
+  const removeCover = formData.get("remove_cover") === "true";
+
+  if (!name?.trim()) {
+    return { error: "Store name is required" };
+  }
+
+  // Get current store details
+  const { data: currentStore, error: fetchErr } = await supabase
+    .from("stores")
+    .select("cover_url")
+    .eq("id", storeId)
+    .single();
+
+  if (fetchErr || !currentStore) {
+    return { error: "Store not found" };
+  }
+
+  let cover_url = currentStore.cover_url || "";
+
+  if (removeCover && !coverFile) {
+    if (currentStore.cover_url) {
+      const coverPath = extractStoragePath(currentStore.cover_url);
+      if (coverPath) {
+        await supabase.storage.from("order-photos").remove([coverPath]);
+      }
+    }
+    cover_url = "";
+  } else if (coverFile && coverFile.size > 0) {
+    // Remove old cover if exists
+    if (currentStore.cover_url) {
+      const oldCoverPath = extractStoragePath(currentStore.cover_url);
+      if (oldCoverPath) {
+        await supabase.storage.from("order-photos").remove([oldCoverPath]);
+      }
+    }
+
+    const filePath = `covers/${user.id}/${Date.now()}_${coverFile.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("order-photos")
+      .upload(filePath, coverFile, {
+        contentType: coverFile.type,
+        cacheControl: "31536000",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return { error: `Cover upload failed: ${uploadError.message}` };
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("order-photos").getPublicUrl(filePath);
+    cover_url = publicUrl;
+  }
+
+  const { data, error } = await supabase
+    .from("stores")
+    .update({
+      name: name.trim(),
+      note,
+      cover_url,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", storeId)
+    .select()
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/stores");
+  revalidatePath(`/stores/${storeId}`);
+  return { data };
+}
+
+export async function updateStoresOrder(orders: { id: string; display_order: number }[]) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  if (!orders || orders.length === 0) {
+    return { success: true };
+  }
+
+  const updates = orders.map((item) =>
+    supabase
+      .from("stores")
+      .update({ display_order: item.display_order })
+      .eq("id", item.id)
+  );
+
+  const results = await Promise.all(updates);
+  const hasError = results.find((r) => r.error);
+  if (hasError) {
+    return { error: hasError.error?.message || "Failed to update store order" };
+  }
+
+  revalidatePath("/stores");
+  return { success: true };
 }
 
 function extractStoragePath(publicUrl: string): string | null {
