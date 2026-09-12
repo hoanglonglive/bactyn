@@ -18,6 +18,7 @@ import {
   updateUserRole,
   deleteUserAccount,
 } from "@/app/actions/admin-actions";
+import { cleanupExpiredCompletedOrders } from "@/app/actions/cleanup-actions";
 
 interface Props {
   currentUserId?: string;
@@ -36,8 +37,27 @@ export function AdminUserModal({
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  async function handleManualCleanup() {
+    setCleaning(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    const result = await cleanupExpiredCompletedOrders();
+
+    if (result.error) {
+      setErrorMsg(`Lỗi dọn dẹp: ${result.error}`);
+    } else if (result.deletedCount > 0) {
+      setSuccessMsg(`Đã tự động xóa ${result.deletedCount} ảnh đơn hàng cũ (>14 ngày) và giải phóng bộ nhớ!`);
+    } else {
+      setSuccessMsg("Tất cả dữ liệu đã sạch. Không có ảnh đơn hàng nào (Đã giao/Hết hàng) cũ hơn 14 ngày.");
+    }
+
+    setCleaning(false);
+  }
 
   // Fetch users on mount
   useEffect(() => {
@@ -168,6 +188,20 @@ export function AdminUserModal({
               </button>
             )}
           </div>
+
+          <button
+            onClick={handleManualCleanup}
+            disabled={cleaning}
+            className="w-full mt-2.5 py-2.5 px-3 rounded-2xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+            title="Quét và xóa ảnh đã giao hoặc hết hàng quá 14 ngày để giải phóng bộ nhớ"
+          >
+            {cleaning ? (
+              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+            ) : (
+              <Trash2 className="w-4 h-4 text-indigo-400" />
+            )}
+            <span>Quét & Dọn dẹp ảnh cũ (&gt;14 ngày)</span>
+          </button>
         </div>
 
         {/* Users List */}
