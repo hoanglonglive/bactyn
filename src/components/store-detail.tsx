@@ -10,7 +10,6 @@ import {
   X,
   LayoutGrid,
   List,
-  Download,
   CheckSquare,
   Trash2,
   ArrowRightLeft,
@@ -247,41 +246,6 @@ export function StoreDetail({
     []
   );
 
-  const exportStoreOrdersCSV = useCallback(() => {
-    if (!items || items.length === 0) return;
-
-    const statusLabels: Record<string, string> = {
-      PURCHASED: "Đã mua xong",
-      PARTIALLY_PURCHASED: "Chưa mua xong",
-      PENDING_ORDER: "Chờ gom order",
-      DELIVERED: "Đã giao hàng",
-      IN_STOCK: "Tồn kho",
-      OUT_OF_STOCK: "Hết hàng",
-    };
-
-    const headers = ["Mã đơn", "Tên khách", "Size", "Màu sắc", "Trạng thái", "Ghi chú", "Ngày tạo"];
-    const rows = items.map((item) => [
-      `"${(item.order_code || "").replace(/"/g, '""')}"`,
-      `"${(item.customer_name || "").replace(/"/g, '""')}"`,
-      `"${(item.size || "").replace(/"/g, '""')}"`,
-      `"${(item.color || "").replace(/"/g, '""')}"`,
-      `"${statusLabels[item.status] || item.status}"`,
-      `"${(item.note || "").replace(/"/g, '""')}"`,
-      `"${new Date(item.created_at).toLocaleString("vi-VN")}"`,
-    ]);
-
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `DonHang_${store.name}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, [items, store.name]);
-
   return (
     <div className="min-h-dvh bg-surface">
       {/* Header */}
@@ -309,15 +273,6 @@ export function StoreDetail({
               </p>
             </div>
           </div>
-
-          <button
-            onClick={exportStoreOrdersCSV}
-            className="p-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 hover:text-white transition-all active:scale-95 border border-indigo-500/30 flex items-center gap-1.5 text-xs font-semibold flex-shrink-0"
-            title="Xuất danh sách đơn hàng ra CSV"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Xuất CSV</span>
-          </button>
         </div>
 
         {/* Instant Search Bar & View Mode Toggle */}
