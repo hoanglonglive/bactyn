@@ -1,9 +1,17 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { uploadOrderPhotos } from "@/app/actions/photo-actions";
 import { compressImage } from "@/lib/image-compressor";
-import { X, Camera, ImagePlus, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  X,
+  Camera,
+  ImagePlus,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  UploadCloud,
+} from "lucide-react";
 
 interface Props {
   storeId: string;
@@ -25,17 +33,20 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
   const [files, setFiles] = useState<FilePreview[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
-  async function handleFiles(inputFiles: FileList | null) {
-    if (!inputFiles) return;
+  const handleFiles = useCallback(async (inputFiles: FileList | Array<File> | null) => {
+    if (!inputFiles || inputFiles.length === 0) return;
 
+    const fileArray = Array.from(inputFiles);
     const newFiles: FilePreview[] = [];
 
-    for (let i = 0; i < inputFiles.length; i++) {
-      const file = inputFiles[i];
-      const id = `${Date.now()}-${i}`;
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      const id = `${Date.now()}-${i}-${Math.random().toString(36).substring(2, 7)}`;
       const preview: FilePreview = {
         id,
         originalName: file.name,
@@ -50,8 +61,8 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
     setFiles((prev) => [...prev, ...newFiles]);
 
     // Compress in parallel
-    for (let i = 0; i < inputFiles.length; i++) {
-      const file = inputFiles[i];
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
       const id = newFiles[i].id;
 
       try {
@@ -63,7 +74,7 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
               : f
           )
         );
-      } catch (err) {
+      } catch {
         setFiles((prev) =>
           prev.map((f) =>
             f.id === id
@@ -77,7 +88,7 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
         );
       }
     }
-  }
+  }, []);
 
   function removeFile(id: string) {
     setFiles((prev) => {
@@ -92,6 +103,7 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
     if (readyFiles.length === 0) return;
 
     setUploading(true);
+    setUploadProgress(`Đang chuẩn bị tải lên ${readyFiles.length} ảnh...`);
 
     const formData = new FormData();
     for (const f of readyFiles) {
@@ -101,9 +113,6 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
       }
     }
 
-    setUploadProgress(`Đang tải lên ${readyFiles.length} ảnh...`);
-
-    // Mark all as uploading
     setFiles((prev) =>
       prev.map((f) =>
         f.status === "ready" ? { ...f, status: "uploading" as const } : f
@@ -123,57 +132,76 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
       );
     }
 
-    setUploadProgress("");
+    setUploadProgress("Tải lên hoàn tất!");
     setUploading(false);
 
-    // Auto close after brief delay
     setTimeout(() => {
       onComplete();
-    }, 800);
+    }, 600);
   }
 
   const readyCount = files.filter((f) => f.status === "ready").length;
-  const compressingCount = files.filter(
-    (f) => f.status === "compressing"
-  ).length;
+  const compressingCount = files.filter((f) => f.status === "compressing").length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-md max-h-[85dvh] rounded-t-3xl sm:rounded-3xl bg-surface-elevated border-t border-border-subtle flex flex-col animate-slide-up">
-        {/* Handle */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+        }}
+        className={`relative w-full max-w-md max-h-[85dvh] rounded-t-3xl sm:rounded-3xl bg-surface-elevated border-t sm:border border-border-subtle flex flex-col animate-slide-up shadow-2xl transition-all ${
+          isDragging ? "ring-2 ring-indigo-500 bg-indigo-950/20" : ""
+        }`}
+      >
+        {/* Handle bar on mobile */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-3 sm:hidden" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4">
-          <h2 className="text-lg font-bold text-white">Thêm ảnh</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+          <div>
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <UploadCloud className="w-5 h-5 text-indigo-400" />
+              Tải ảnh đơn hàng
+            </h2>
+            <p className="text-[11px] text-white/40">
+              Chọn hoặc kéo thả nhiều ảnh chụp sản phẩm
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5"
+            className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-all active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Source buttons */}
-        <div className="flex gap-3 px-6 pb-4">
+        {/* Source Quick Buttons */}
+        <div className="flex gap-3 px-6 pt-4 pb-2">
           <button
             onClick={() => cameraRef.current?.click()}
-            className="flex-1 flex flex-col items-center gap-2 py-4 rounded-xl border border-border-subtle bg-surface-overlay hover:bg-surface-overlay/80 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-border-subtle bg-surface-overlay hover:bg-surface-overlay/80 text-white font-medium text-xs transition-all active:scale-95 shadow-md"
           >
-            <Camera className="w-6 h-6 text-indigo-400" />
-            <span className="text-xs text-white/60">Chụp ảnh</span>
+            <Camera className="w-4 h-4 text-indigo-400" />
+            <span>Chụp ảnh</span>
           </button>
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex-1 flex flex-col items-center gap-2 py-4 rounded-xl border border-border-subtle bg-surface-overlay hover:bg-surface-overlay/80 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-border-subtle bg-surface-overlay hover:bg-surface-overlay/80 text-white font-medium text-xs transition-all active:scale-95 shadow-md"
           >
-            <ImagePlus className="w-6 h-6 text-violet-400" />
-            <span className="text-xs text-white/60">Chọn từ thư viện</span>
+            <ImagePlus className="w-4 h-4 text-violet-400" />
+            <span>Chọn từ album</span>
           </button>
 
           <input
@@ -194,14 +222,30 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
           />
         </div>
 
-        {/* Preview grid */}
+        {/* Dropzone Hint when empty */}
+        {files.length === 0 && (
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="mx-6 my-4 p-8 border-2 border-dashed border-white/15 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/50 hover:bg-white/[0.02] transition-all text-center group"
+          >
+            <UploadCloud className="w-10 h-10 text-white/20 group-hover:text-indigo-400 transition-colors mb-2" />
+            <p className="text-xs font-semibold text-white/70">
+              Kéo & thả ảnh vào đây hoặc nhấp để chọn
+            </p>
+            <p className="text-[10px] text-white/30 mt-1">
+              Ảnh sẽ được nén tự động siêu nhanh (&lt;200KB)
+            </p>
+          </div>
+        )}
+
+        {/* Selected Photos Grid */}
         {files.length > 0 && (
-          <div className="flex-1 overflow-y-auto px-6 pb-4">
-            <div className="grid grid-cols-3 gap-2">
+          <div className="flex-1 overflow-y-auto px-6 py-3">
+            <div className="grid grid-cols-3 gap-2.5">
               {files.map((f) => (
                 <div
                   key={f.id}
-                  className="relative aspect-square rounded-xl overflow-hidden bg-surface-overlay"
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-surface-overlay border border-border-subtle shadow-md"
                 >
                   <img
                     src={f.previewUrl}
@@ -209,33 +253,33 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
                     className="w-full h-full object-cover"
                   />
 
-                  {/* Status overlay */}
+                  {/* Status Overlay Indicator */}
                   {f.status === "compressing" && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
                       <Loader2 className="w-5 h-5 text-white animate-spin" />
                     </div>
                   )}
                   {f.status === "uploading" && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
                       <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
                     </div>
                   )}
                   {f.status === "done" && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
+                      <CheckCircle2 className="w-7 h-7 text-emerald-400 drop-shadow-md animate-bounce" />
                     </div>
                   )}
                   {f.status === "error" && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
                       <AlertCircle className="w-5 h-5 text-rose-400" />
                     </div>
                   )}
 
-                  {/* Remove button */}
+                  {/* Remove Button */}
                   {(f.status === "ready" || f.status === "error") && (
                     <button
                       onClick={() => removeFile(f.id)}
-                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center text-white text-[10px]"
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white text-xs hover:bg-rose-600 transition-all active:scale-90"
                     >
                       ✕
                     </button>
@@ -246,28 +290,31 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
           </div>
         )}
 
-        {/* Action bar */}
+        {/* Action Button Bar */}
         {files.length > 0 && (
-          <div className="px-6 py-4 border-t border-border-subtle">
+          <div className="p-6 border-t border-border-subtle bg-surface-elevated rounded-b-3xl">
             {uploadProgress && (
-              <p className="text-xs text-indigo-400 mb-2 text-center">
+              <p className="text-xs text-indigo-400 mb-2 text-center font-medium animate-pulse">
                 {uploadProgress}
               </p>
             )}
             <button
               onClick={handleUpload}
               disabled={uploading || readyCount === 0}
-              className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+              className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-600 px-4 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-98"
             >
               {uploading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang tải ảnh lên...
+                </>
               ) : compressingCount > 0 ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Đang nén {compressingCount} ảnh...
                 </>
               ) : (
-                <>Tải lên {readyCount} ảnh</>
+                <>Tải lên ngay ({readyCount} ảnh)</>
               )}
             </button>
           </div>

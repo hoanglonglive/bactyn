@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   Trash2,
   ArrowRightLeft,
   ChevronDown,
   Loader2,
-  Save,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
 } from "lucide-react";
 import type { OrderItem, OrderStatus } from "@/lib/types";
 import { STATUS_CONFIG } from "@/lib/types";
@@ -21,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   photo: OrderItem;
+  allPhotos?: OrderItem[];
   isAdmin: boolean;
   otherStores: { id: string; name: string }[];
   onClose: () => void;
@@ -28,6 +31,7 @@ interface Props {
   onPhotoMoved: (photoId: string) => void;
   onPhotoDeleted: (photoId: string) => void;
   onInfoUpdate: (photoId: string, data: Partial<OrderItem>) => void;
+  onNavigatePhoto?: (targetPhoto: OrderItem) => void;
 }
 
 const STATUSES: OrderStatus[] = [
@@ -39,6 +43,7 @@ const STATUSES: OrderStatus[] = [
 
 export function PhotoDetailModal({
   photo,
+  allPhotos = [],
   isAdmin,
   otherStores,
   onClose,
@@ -46,7 +51,9 @@ export function PhotoDetailModal({
   onPhotoMoved,
   onPhotoDeleted,
   onInfoUpdate,
+  onNavigatePhoto,
 }: Props) {
+  const [currentPhoto, setCurrentPhoto] = useState(photo);
   const [currentStatus, setCurrentStatus] = useState(photo.status);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -61,26 +68,79 @@ export function PhotoDetailModal({
   const [color, setColor] = useState(photo.color || "");
   const [note, setNote] = useState(photo.note || "");
   const [saving, setSaving] = useState(false);
-  const [infoChanged, setInfoChanged] = useState(false);
+
+  // Sync state when photo prop changes (navigating prev/next)
+  useEffect(() => {
+    setCurrentPhoto(photo);
+    setCurrentStatus(photo.status);
+    setOrderCode(photo.order_code || "");
+    setCustomerName(photo.customer_name || "");
+    setSize(photo.size || "");
+    setColor(photo.color || "");
+    setNote(photo.note || "");
+  }, [photo]);
+
+  // Indexing for prev / next navigation
+  const currentIndex = allPhotos.findIndex((p) => p.id === currentPhoto.id);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < allPhotos.length - 1;
+
+  const handlePrev = useCallback(() => {
+    if (hasPrev && onNavigatePhoto) {
+      onNavigatePhoto(allPhotos[currentIndex - 1]);
+    }
+  }, [hasPrev, currentIndex, allPhotos, onNavigatePhoto]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext && onNavigatePhoto) {
+      onNavigatePhoto(allPhotos[currentIndex + 1]);
+    }
+  }, [hasNext, currentIndex, allPhotos, onNavigatePhoto]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") handlePrev();
+      if (e.key === "ArrowRight") handleNext();
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handlePrev, handleNext, onClose]);
 
   async function handleStatusChange(newStatus: OrderStatus) {
     if (newStatus === currentStatus) return;
 
     setStatusAnimating(newStatus);
     setCurrentStatus(newStatus);
-    onStatusUpdate(photo.id, newStatus);
+    onStatusUpdate(currentPhoto.id, newStatus);
 
-    await updatePhotoStatus(photo.id, newStatus);
+    await updatePhotoStatus(currentPhoto.id, newStatus);
+    setTimeout(() => setStatusAnimating(null), 250);
+  }
 
-    setTimeout(() => setStatusAnimating(null), 300);
+  async function handleSaveInfo() {
+    setSaving(true);
+    const data = {
+      order_code: orderCode.trim(),
+      customer_name: customerName.trim(),
+      size: size.trim(),
+      color: color.trim(),
+      note: note.trim(),
+    };
+
+    await updatePhotoInfo(currentPhoto.id, data);
+    onInfoUpdate(currentPhoto.id, data);
+    setSaving(false);
   }
 
   async function handleMove(targetStoreId: string) {
     setMoving(true);
-    const result = await movePhotoToStore(photo.id, targetStoreId);
+    const result = await movePhotoToStore(currentPhoto.id, targetStoreId);
 
     if (!result.error) {
-      onPhotoMoved(photo.id);
+      onPhotoMoved(currentPhoto.id);
+      onClose();
     }
     setMoving(false);
     setShowMoveMenu(false);
@@ -88,85 +148,106 @@ export function PhotoDetailModal({
 
   async function handleDelete() {
     setDeleting(true);
-    const result = await deleteOrderPhoto(photo.id);
+    const result = await deleteOrderPhoto(currentPhoto.id);
 
     if (!result.error) {
-      onPhotoDeleted(photo.id);
+      onPhotoDeleted(currentPhoto.id);
+      onClose();
     }
     setDeleting(false);
   }
 
-  async function handleSaveInfo() {
-    setSaving(true);
-    const data = {
-      order_code: orderCode,
-      customer_name: customerName,
-      size,
-      color,
-      note,
-    };
-
-    await updatePhotoInfo(photo.id, data);
-    onInfoUpdate(photo.id, data);
-
-    setSaving(false);
-    setInfoChanged(false);
-  }
-
-  function markChanged() {
-    setInfoChanged(true);
-  }
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 safe-top">
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col animate-fade-in select-none">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 safe-top">
         <button
           onClick={onClose}
-          className="p-2 -ml-2 rounded-lg text-white/60 hover:text-white transition-colors"
+          className="p-2 -ml-2 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all active:scale-95"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" />
         </button>
 
+        {/* Counter */}
+        {allPhotos.length > 0 && (
+          <div className="text-xs font-semibold text-white/70 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+            {currentIndex + 1} / {allPhotos.length}
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
-          {/* Move button */}
+          {/* Move Button */}
           <button
             onClick={() => setShowMoveMenu(!showMoveMenu)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/70 text-xs font-medium hover:bg-white/15 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 transition-all active:scale-95 border border-white/10"
           >
             <ArrowRightLeft className="w-3.5 h-3.5" />
-            Chuyển
-            <ChevronDown className="w-3 h-3" />
+            <span>Chuyển</span>
+            <ChevronDown className="w-3 h-3 opacity-60" />
           </button>
 
-          {/* Admin Delete button */}
+          {/* Admin Delete */}
           {isAdmin && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 text-rose-400 text-xs font-medium hover:bg-rose-500/25 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-medium hover:bg-rose-500/30 transition-all active:scale-95 border border-rose-500/30"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              Xóa
+              <span>Xóa</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Full-size image */}
-        <div className="px-2">
+      {/* Main Container */}
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        {/* Image Preview Container with Arrow Controls */}
+        <div className="relative flex-1 flex items-center justify-center p-2 min-h-[360px] max-h-[55dvh] group">
+          {/* Previous Arrow */}
+          {hasPrev && (
+            <button
+              onClick={handlePrev}
+              className="absolute left-3 z-10 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              title="Ảnh trước (←)"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Next Arrow */}
+          {hasNext && (
+            <button
+              onClick={handleNext}
+              className="absolute right-3 z-10 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              title="Ảnh sau (→)"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+
           <img
-            src={photo.image_url}
-            alt={photo.order_code || "Order photo"}
-            className="w-full h-auto rounded-2xl object-contain max-h-[50dvh]"
+            src={currentPhoto.image_url}
+            alt={currentPhoto.order_code || "Order photo"}
+            className="w-full h-full rounded-2xl object-contain shadow-2xl transition-transform duration-200"
           />
+
+          <a
+            href={currentPhoto.image_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-4 right-4 p-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 text-white/70 hover:text-white transition-all active:scale-95"
+            title="Xem ảnh gốc"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </a>
         </div>
 
-        {/* Status Buttons */}
-        <div className="px-4 py-4">
-          <p className="text-xs font-medium text-white/40 mb-2">Trạng thái</p>
-          <div className="grid grid-cols-2 gap-2">
+        {/* Status Selector Bar (1-Click Instant Upgrade) */}
+        <div className="px-4 py-3 bg-surface/50 border-y border-white/10">
+          <p className="text-[11px] font-semibold text-white/40 mb-2 uppercase tracking-wider">
+            Trạng thái đơn hàng
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {STATUSES.map((status) => {
               const config = STATUS_CONFIG[status];
               const isActive = currentStatus === status;
@@ -176,14 +257,14 @@ export function PhotoDetailModal({
                   key={status}
                   onClick={() => handleStatusChange(status)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all",
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 shadow-md",
                     isActive
-                      ? config.bgColor + " " + config.color
-                      : "border-border-subtle bg-surface-overlay text-white/40 hover:text-white/60",
-                    statusAnimating === status && "status-pop"
+                      ? config.bgColor + " " + config.color + " border-white/30 shadow-indigo-500/20 ring-2 ring-indigo-500/30"
+                      : "border-border-subtle bg-surface-overlay/60 text-white/40 hover:text-white/70 hover:bg-surface-overlay",
+                    statusAnimating === status && "animate-bounce"
                   )}
                 >
-                  <span>{config.emoji}</span>
+                  <span className="text-base">{config.emoji}</span>
                   <span>{config.labelVi}</span>
                 </button>
               );
@@ -191,98 +272,85 @@ export function PhotoDetailModal({
           </div>
         </div>
 
-        {/* Editable Info Fields */}
-        <div className="px-4 pb-6 space-y-3">
-          <p className="text-xs font-medium text-white/40">Thông tin đơn</p>
+        {/* Fast Editable Details with Auto-Save on Blur */}
+        <div className="p-4 space-y-3 max-w-lg mx-auto w-full">
+          <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
+            Chi tiết thông tin đơn
+          </p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] text-white/30 mb-1 block">
+              <label className="text-[10px] font-medium text-white/50 mb-1 block">
                 Mã đơn hàng
               </label>
               <input
                 value={orderCode}
-                onChange={(e) => {
-                  setOrderCode(e.target.value);
-                  markChanged();
-                }}
-                className="w-full rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                placeholder="VD: ORD-001"
+                onChange={(e) => setOrderCode(e.target.value)}
+                onBlur={handleSaveInfo}
+                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                placeholder="Ví dụ: ORD-102"
               />
             </div>
+
             <div>
-              <label className="text-[10px] text-white/30 mb-1 block">
-                Tên khách
+              <label className="text-[10px] font-medium text-white/50 mb-1 block">
+                Tên khách hàng
               </label>
               <input
                 value={customerName}
-                onChange={(e) => {
-                  setCustomerName(e.target.value);
-                  markChanged();
-                }}
-                className="w-full rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all"
+                onChange={(e) => setCustomerName(e.target.value)}
+                onBlur={handleSaveInfo}
+                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                 placeholder="Nguyễn Văn A"
               />
             </div>
+
             <div>
-              <label className="text-[10px] text-white/30 mb-1 block">
-                Size
+              <label className="text-[10px] font-medium text-white/50 mb-1 block">
+                Kích thước (Size)
               </label>
               <input
                 value={size}
-                onChange={(e) => {
-                  setSize(e.target.value);
-                  markChanged();
-                }}
-                className="w-full rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                placeholder="M, L, XL..."
+                onChange={(e) => setSize(e.target.value)}
+                onBlur={handleSaveInfo}
+                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                placeholder="M, L, XL, 42..."
               />
             </div>
+
             <div>
-              <label className="text-[10px] text-white/30 mb-1 block">
+              <label className="text-[10px] font-medium text-white/50 mb-1 block">
                 Màu sắc
               </label>
               <input
                 value={color}
-                onChange={(e) => {
-                  setColor(e.target.value);
-                  markChanged();
-                }}
-                className="w-full rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                placeholder="Đen, Trắng..."
+                onChange={(e) => setColor(e.target.value)}
+                onBlur={handleSaveInfo}
+                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                placeholder="Đen, Trắng, Đỏ..."
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] text-white/30 mb-1 block">
-              Ghi chú
+            <label className="text-[10px] font-medium text-white/50 mb-1 block">
+              Ghi chú thêm
             </label>
             <textarea
               value={note}
-              onChange={(e) => {
-                setNote(e.target.value);
-                markChanged();
-              }}
+              onChange={(e) => setNote(e.target.value)}
+              onBlur={handleSaveInfo}
               rows={2}
-              className="w-full rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all resize-none"
-              placeholder="Ghi chú thêm..."
+              className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-3 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"
+              placeholder="Nhập thêm chi tiết ghi chú..."
             />
           </div>
 
-          {infoChanged && (
-            <button
-              onClick={handleSaveInfo}
-              disabled={saving}
-              className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              Lưu thông tin
-            </button>
+          {saving && (
+            <p className="text-[10px] text-indigo-400 flex items-center justify-end gap-1 font-medium animate-pulse">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Đang tự động lưu...
+            </p>
           )}
         </div>
       </div>
@@ -291,15 +359,15 @@ export function PhotoDetailModal({
       {showMoveMenu && (
         <div className="fixed inset-0 z-60" onClick={() => setShowMoveMenu(false)}>
           <div
-            className="absolute top-14 right-4 w-56 rounded-2xl bg-surface-elevated border border-border-subtle shadow-2xl py-2 animate-fade-in"
+            className="absolute top-14 right-4 w-60 rounded-2xl bg-surface-elevated border border-border-subtle shadow-2xl py-2 animate-fade-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="px-4 py-2 text-[10px] font-medium text-white/30 uppercase tracking-wider">
-              Chuyển sang gian hàng
+            <p className="px-4 py-2 text-[10px] font-bold text-white/40 uppercase tracking-wider">
+              Chuyển sang gian hàng khác
             </p>
             {otherStores.length === 0 ? (
               <p className="px-4 py-3 text-xs text-white/40">
-                Không có gian hàng khác
+                Chưa có gian hàng khác
               </p>
             ) : (
               otherStores.map((store) => (
@@ -307,14 +375,14 @@ export function PhotoDetailModal({
                   key={store.id}
                   onClick={() => handleMove(store.id)}
                   disabled={moving}
-                  className="w-full text-left px-4 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2.5 text-xs text-white/80 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {moving ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <ArrowRightLeft className="w-3.5 h-3.5 text-white/30" />
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-400" />
                   )}
-                  {store.name}
+                  <span className="truncate">{store.name}</span>
                 </button>
               ))
             )}
@@ -326,28 +394,28 @@ export function PhotoDetailModal({
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-60 flex items-center justify-center px-6">
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setShowDeleteConfirm(false)}
           />
-          <div className="relative w-full max-w-xs rounded-2xl bg-surface-elevated border border-border-subtle p-5 text-center animate-fade-in">
-            <p className="text-base font-bold text-white mb-2">Xóa ảnh?</p>
-            <p className="text-xs text-white/40 mb-4">
-              Ảnh sẽ bị xóa vĩnh viễn khỏi hệ thống.
+          <div className="relative w-full max-w-xs rounded-2xl bg-surface-elevated border border-border-subtle p-5 text-center shadow-2xl animate-fade-in">
+            <p className="text-base font-bold text-white mb-1.5">Xóa ảnh đơn này?</p>
+            <p className="text-xs text-white/50 mb-5">
+              Hành động này không thể hoàn tác. Ảnh sẽ bị xóa vĩnh viễn.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-xl border border-border-subtle py-2.5 text-sm text-white/60 hover:text-white/80 transition-all"
+                className="flex-1 rounded-xl border border-border-subtle py-2.5 text-xs font-semibold text-white/70 hover:text-white transition-all active:scale-95"
               >
                 Hủy
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Xóa
+                Xóa ngay
               </button>
             </div>
           </div>
