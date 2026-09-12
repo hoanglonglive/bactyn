@@ -26,20 +26,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-12 bg-surface">
+    <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-12 bg-black">
       {/* Background gradient orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-indigo-600/10 blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-violet-600/10 blur-[100px]" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-amber-500/10 blur-[120px]" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-amber-400/10 blur-[120px]" />
       </div>
 
       <div className="relative w-full max-w-sm space-y-8 animate-fade-in">
         {/* Logo */}
         <div className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <Package className="w-8 h-8 text-white" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
+            <Package className="w-8 h-8 text-black" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-black tracking-tight text-white">
             Bactyn Orders
           </h1>
           <p className="text-sm text-white/50">
@@ -62,7 +62,7 @@ export default function LoginPage() {
                 name="fullName"
                 type="text"
                 autoComplete="name"
-                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                className="w-full rounded-xl border-0 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
                 placeholder="Nguyễn Văn A"
               />
             </div>
@@ -81,7 +81,7 @@ export default function LoginPage() {
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+              className="w-full rounded-xl border-0 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
               placeholder="you@example.com"
             />
           </div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 required
                 autoComplete={isSignUp ? "new-password" : "current-password"}
                 minLength={6}
-                className="w-full rounded-xl border border-border-subtle bg-surface-elevated px-4 py-3 pr-11 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                className="w-full rounded-xl border-0 bg-white/10 px-4 py-3 pr-11 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
                 placeholder="••••••••"
               />
               <button
@@ -127,9 +127,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 px-4 py-3 text-sm font-black text-black shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loading && <Loader2 className="w-4 h-4 animate-spin text-black" />}
             {isSignUp ? "Tạo tài khoản" : "Đăng nhập"}
           </button>
         </form>
@@ -142,7 +142,7 @@ export default function LoginPage() {
               setIsSignUp(!isSignUp);
               setError("");
             }}
-            className="ml-1 font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="ml-1 font-bold text-amber-400 hover:text-amber-300 transition-colors"
           >
             {isSignUp ? "Đăng nhập" : "Đăng ký"}
           </button>

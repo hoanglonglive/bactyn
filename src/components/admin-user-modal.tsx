@@ -249,7 +249,7 @@ export function AdminUserModal({
         <div className="flex-1 overflow-y-auto px-6 py-3 space-y-2.5">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" />
+              <Loader2 className="w-8 h-8 text-amber-400 animate-spin mb-2" />
               <p className="text-xs text-white/40">Đang tải danh sách người dùng...</p>
             </div>
           ) : filteredUsers.length === 0 ? (
@@ -270,7 +270,7 @@ export function AdminUserModal({
                 >
                   {/* User Profile Info */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center font-black text-white text-sm flex-shrink-0 shadow-md border border-white/20">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center font-black text-black text-sm flex-shrink-0 shadow-md">
                       {user.full_name
                         ? user.full_name.substring(0, 1).toUpperCase()
                         : user.email.substring(0, 1).toUpperCase()}
@@ -281,7 +281,7 @@ export function AdminUserModal({
                           {user.full_name || "Thành viên"}
                         </p>
                         {isSelf && (
-                          <span className="text-[9px] font-extrabold text-indigo-300 bg-indigo-500/25 px-2 py-0.5 rounded-full border border-indigo-500/40">
+                          <span className="text-[9px] font-extrabold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30">
                             Bạn
                           </span>
                         )}
@@ -301,7 +301,7 @@ export function AdminUserModal({
                       className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
                         isAdminRole
                           ? "bg-amber-400/20 text-amber-300 border-amber-400/40 hover:bg-amber-400/30 shadow-amber-400/10 shadow-sm"
-                          : "bg-indigo-500/20 text-indigo-300 border-indigo-500/35 hover:bg-indigo-500/30"
+                          : "bg-white/10 text-white/70 border-white/10 hover:bg-white/20 hover:text-white"
                       }`}
                       title={isSelf ? "Bạn không thể hạ quyền của chính mình" : "Nhấn để đổi quyền"}
                     >
@@ -314,7 +314,7 @@ export function AdminUserModal({
                         </>
                       ) : (
                         <>
-                          <User className="w-3.5 h-3.5 text-indigo-400" />
+                          <User className="w-3.5 h-3.5 text-white/70" />
                           <span>Nhân viên 👤</span>
                         </>
                       )}
