@@ -25,7 +25,7 @@ export function PhotoGrid({ items, onPhotoClick }: Props) {
   }
 
   return (
-    <div className="columns-2 sm:columns-3 md:columns-4 gap-2.5 space-y-2.5">
+    <div className="columns-2 sm:columns-3 md:columns-4 xl:columns-5 gap-2 sm:gap-3 space-y-2 sm:space-y-3">
       {items.map((item, i) => {
         const statusConfig = STATUS_CONFIG[item.status];
 
@@ -37,7 +37,8 @@ export function PhotoGrid({ items, onPhotoClick }: Props) {
           >
             <button
               onClick={() => onPhotoClick(item)}
-              className="group relative w-full rounded-2xl overflow-hidden bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 block text-left transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-xl"
+              aria-label={`Mở ảnh ${item.order_code || "đơn hàng"}`}
+              className="group relative w-full cursor-zoom-in rounded-2xl overflow-hidden bg-surface-elevated border border-white/[0.08] hover:border-white/25 block text-left transition-[transform,box-shadow,border-color] duration-200 active:scale-[0.98] shadow-md hover:shadow-2xl hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
             >
               {/* Photo Image */}
               <div className="relative aspect-[9/16] w-full overflow-hidden bg-black/30">
@@ -55,9 +56,10 @@ export function PhotoGrid({ items, onPhotoClick }: Props) {
 
               {/* Status Badge Tag */}
               <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 shadow-lg">
-                <span className="text-xs leading-none">
-                  {statusConfig.emoji}
-                </span>
+                <span
+                  aria-hidden="true"
+                  className={`w-2 h-2 rounded-full shadow-[0_0_0_2px_rgba(255,255,255,0.12)] ${statusConfig.dotColor}`}
+                />
                 <span className="text-[10px] font-bold text-white/90">
                   {statusConfig.labelVi}
                 </span>

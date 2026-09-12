@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   X,
   Trash2,
@@ -9,6 +15,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Maximize2,
 } from "lucide-react";
 import type { OrderItem, OrderStatus } from "@/lib/types";
@@ -41,6 +48,18 @@ const STATUSES: OrderStatus[] = [
   "OUT_OF_STOCK",
 ];
 
+type DragAxis = "horizontal" | "vertical" | null;
+
+interface GestureState {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  lastX: number;
+  lastY: number;
+  startedAt: number;
+  axis: DragAxis;
+}
+
 export function PhotoDetailModal({
   photo,
   allPhotos = [],
@@ -69,6 +88,13 @@ export function PhotoDetailModal({
   const [note, setNote] = useState(photo.note || "");
   const [saving, setSaving] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
+  const gestureRef = useRef<GestureState | null>(null);
+  const motionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const reducedMotionRef = useRef(false);
 
   // Indexing for prev / next navigation
   const currentIndex = allPhotos.findIndex((p) => p.id === currentPhoto.id);
@@ -87,6 +113,15 @@ export function PhotoDetailModal({
     }
   }, [allPhotos, currentIndex]);
 
+  useEffect(() => {
+    reducedMotionRef.current = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    return () => {
+      if (motionTimerRef.current) clearTimeout(motionTimerRef.current);
+    };
+  }, []);
+
   const handlePrev = useCallback(() => {
     if (hasPrev && onNavigatePhoto) {
       onNavigatePhoto(allPhotos[currentIndex - 1]);
@@ -99,16 +134,137 @@ export function PhotoDetailModal({
     }
   }, [hasNext, currentIndex, allPhotos, onNavigatePhoto]);
 
+  const resetGesture = useCallback(() => {
+    gestureRef.current = null;
+    if (motionTimerRef.current) clearTimeout(motionTimerRef.current);
+    setIsDragging(false);
+    setIsSettling(true);
+    setDragOffset({ x: 0, y: 0 });
+    motionTimerRef.current = setTimeout(() => setIsSettling(false), 180);
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (isSettling) return;
+    if (reducedMotionRef.current) {
+      onClose();
+      return;
+    }
+    setIsDragging(false);
+    setIsSettling(true);
+    setDragOffset({ x: 0, y: window.innerHeight });
+    motionTimerRef.current = setTimeout(onClose, 180);
+  }, [isSettling, onClose]);
+
+  const navigateWithMotion = useCallback(
+    (direction: "prev" | "next") => {
+      const canNavigate = direction === "prev" ? hasPrev : hasNext;
+      if (!canNavigate || isSettling) {
+        resetGesture();
+        return;
+      }
+      const navigate = direction === "prev" ? handlePrev : handleNext;
+      if (reducedMotionRef.current) {
+        navigate();
+        return;
+      }
+      setIsDragging(false);
+      setIsSettling(true);
+      setDragOffset({
+        x: direction === "next" ? -window.innerWidth : window.innerWidth,
+        y: 0,
+      });
+      motionTimerRef.current = setTimeout(navigate, 170);
+    }, [handleNext, handlePrev, hasNext, hasPrev, isSettling, resetGesture]
+  );
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (isSettling || event.button !== 0) return;
+    if (
+      (event.target as HTMLElement).closest(
+        "button, a, input, textarea, select"
+      )
+    ) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    gestureRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      lastX: event.clientX,
+      lastY: event.clientY,
+      startedAt: performance.now(),
+      axis: null,
+    };
+    setIsDragging(true);
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    gesture.lastX = event.clientX;
+    gesture.lastY = event.clientY;
+    const deltaX = event.clientX - gesture.startX;
+    const deltaY = event.clientY - gesture.startY;
+
+    if (!gesture.axis && Math.hypot(deltaX, deltaY) > 8) {
+      gesture.axis = Math.abs(deltaX) > Math.abs(deltaY)
+        ? "horizontal"
+        : "vertical";
+    }
+
+    if (gesture.axis === "horizontal") {
+      const blocked = (deltaX > 0 && !hasPrev) || (deltaX < 0 && !hasNext);
+      setDragOffset({ x: blocked ? deltaX * 0.18 : deltaX, y: 0 });
+    } else if (gesture.axis === "vertical") {
+      setDragOffset({ x: 0, y: deltaY < 0 ? deltaY * 0.16 : deltaY });
+    }
+  }
+
+  function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    gestureRef.current = null;
+
+    const deltaX = gesture.lastX - gesture.startX;
+    const deltaY = gesture.lastY - gesture.startY;
+    const elapsed = Math.max(performance.now() - gesture.startedAt, 1);
+
+    if (
+      gesture.axis === "horizontal" &&
+      (Math.abs(deltaX) > 64 || Math.abs(deltaX) / elapsed > 0.55)
+    ) {
+      navigateWithMotion(deltaX < 0 ? "next" : "prev");
+      return;
+    }
+
+    if (
+      gesture.axis === "vertical" &&
+      deltaY > 0 &&
+      (deltaY > 96 || deltaY / elapsed > 0.55)
+    ) {
+      requestClose();
+      return;
+    }
+
+    if (gesture.axis === "vertical" && deltaY < -56) {
+      resetGesture();
+      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    resetGesture();
+  }
+
   // Keyboard navigation
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "ArrowRight") handleNext();
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") requestClose();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handlePrev, handleNext, onClose]);
+  }, [handlePrev, handleNext, requestClose]);
 
   async function handleStatusChange(newStatus: OrderStatus) {
     if (newStatus === currentStatus) return;
@@ -160,12 +316,23 @@ export function PhotoDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col animate-fade-in select-none">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Xem chi tiết ảnh đơn hàng"
+      className="fixed inset-0 z-50 backdrop-blur-md flex flex-col animate-fade-in select-none"
+      style={{
+        backgroundColor: `rgba(0, 0, 0, ${
+          0.96 - Math.min(Math.max(dragOffset.y, 0) / 900, 0.4)
+        })`,
+      }}
+    >
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 safe-top">
         <button
-          onClick={onClose}
-          className="p-2 -ml-2 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all active:scale-95"
+          onClick={requestClose}
+          aria-label="Đóng ảnh"
+          className="w-11 h-11 -ml-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all active:scale-95 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
         >
           <X className="w-5 h-5" />
         </button>
@@ -181,7 +348,8 @@ export function PhotoDetailModal({
           {/* Move Button */}
           <button
             onClick={() => setShowMoveMenu(!showMoveMenu)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 transition-all active:scale-95 border border-white/10"
+            aria-expanded={showMoveMenu}
+            className="min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 transition-all active:scale-95 border border-white/10"
           >
             <ArrowRightLeft className="w-3.5 h-3.5" />
             <span>Chuyển</span>
@@ -192,7 +360,7 @@ export function PhotoDetailModal({
           {isAdmin && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-medium hover:bg-rose-500/30 transition-all active:scale-95 border border-rose-500/30"
+              className="min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-medium hover:bg-rose-500/30 transition-all active:scale-95 border border-rose-500/30"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Xóa</span>
@@ -204,12 +372,32 @@ export function PhotoDetailModal({
       {/* Main Container */}
       <div className="flex-1 min-h-0 flex flex-col overflow-y-auto lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] lg:overflow-hidden">
         {/* Image Preview Container with Arrow Controls */}
-        <div className="relative flex items-center justify-center p-2 h-[calc(100dvh-57px)] min-h-[calc(100dvh-57px)] shrink-0 group lg:h-full lg:min-h-0 lg:p-4">
+        <div
+          className="relative flex items-center justify-center p-2 h-[calc(100dvh-57px)] min-h-[calc(100dvh-57px)] shrink-0 group lg:h-full lg:min-h-0 lg:p-4"
+          style={{
+            touchAction: "none",
+            transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0) scale(${
+              1 - Math.min(Math.max(dragOffset.y, 0) / 1800, 0.045)
+            })`,
+            transition:
+              isDragging && !isSettling
+                ? "none"
+                : "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerEnd}
+          onPointerCancel={resetGesture}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) requestClose();
+          }}
+        >
           {/* Previous Arrow */}
           {hasPrev && (
             <button
-              onClick={handlePrev}
-              className="absolute left-3 z-10 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              onClick={() => navigateWithMotion("prev")}
+              aria-label="Ảnh trước"
+              className="absolute left-3 z-10 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
               title="Ảnh trước (←)"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -219,8 +407,9 @@ export function PhotoDetailModal({
           {/* Next Arrow */}
           {hasNext && (
             <button
-              onClick={handleNext}
-              className="absolute right-3 z-10 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl"
+              onClick={() => navigateWithMotion("next")}
+              aria-label="Ảnh tiếp theo"
+              className="absolute right-3 z-10 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white hover:bg-black/80 flex items-center justify-center transition-all active:scale-90 shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
               title="Ảnh sau (→)"
             >
               <ChevronRight className="w-6 h-6" />
@@ -242,6 +431,7 @@ export function PhotoDetailModal({
             loading="eager"
             decoding="async"
             fetchPriority="high"
+            draggable={false}
             onLoad={() => setImageLoaded(true)}
             className={`relative w-full h-full max-w-full max-h-full rounded-2xl object-contain shadow-2xl transition-opacity duration-150 ${
               imageLoaded ? "opacity-100" : "opacity-0"
@@ -257,9 +447,27 @@ export function PhotoDetailModal({
           >
             <Maximize2 className="w-4 h-4" />
           </a>
+
+          <button
+            type="button"
+            onClick={() =>
+              detailsRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              })
+            }
+            className="absolute z-10 bottom-4 left-1/2 -translate-x-1/2 min-h-11 px-4 rounded-full bg-black/65 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/80 flex items-center gap-1.5 shadow-xl lg:hidden"
+            aria-label="Mở chi tiết đơn hàng"
+          >
+            <ChevronUp className="w-4 h-4" />
+            Vuốt lên · Chi tiết
+          </button>
         </div>
 
-        <div className="lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-white/10">
+        <div
+          ref={detailsRef}
+          className="scroll-mt-2 lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-white/10"
+        >
         {/* Status Selector Bar (1-Click Instant Upgrade) */}
         <div className="px-4 py-3 bg-surface/50 border-y border-white/10 lg:border-t-0">
           <p className="text-[11px] font-semibold text-white/40 mb-2 uppercase tracking-wider">
@@ -275,14 +483,17 @@ export function PhotoDetailModal({
                   key={status}
                   onClick={() => handleStatusChange(status)}
                   className={cn(
-                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 shadow-md",
+                    "min-h-11 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 shadow-md",
                     isActive
                       ? config.bgColor + " " + config.color + " border-white/30 shadow-indigo-500/20 ring-2 ring-indigo-500/30"
                       : "border-border-subtle bg-surface-overlay/60 text-white/40 hover:text-white/70 hover:bg-surface-overlay",
                     statusAnimating === status && "animate-bounce"
                   )}
                 >
-                  <span className="text-base">{config.emoji}</span>
+                  <span
+                    aria-hidden="true"
+                    className={`w-2.5 h-2.5 rounded-full ${config.dotColor}`}
+                  />
                   <span>{config.labelVi}</span>
                 </button>
               );

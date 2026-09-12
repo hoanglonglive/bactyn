@@ -52,13 +52,14 @@ export interface OrderItem {
 
 export const STATUS_CONFIG: Record<
   OrderStatus,
-  { label: string; labelVi: string; color: string; bgColor: string; emoji: string }
+  { label: string; labelVi: string; color: string; bgColor: string; dotColor: string; emoji: string }
 > = {
   PURCHASED: {
     label: "Purchased",
     labelVi: "Đã mua",
     color: "text-emerald-400",
     bgColor: "bg-emerald-500/20 border-emerald-500/30",
+    dotColor: "bg-emerald-400",
     emoji: "🟢",
   },
   PENDING_ORDER: {
@@ -66,6 +67,7 @@ export const STATUS_CONFIG: Record<
     labelVi: "Chờ order",
     color: "text-amber-400",
     bgColor: "bg-amber-500/20 border-amber-500/30",
+    dotColor: "bg-amber-400",
     emoji: "🟡",
   },
   DELIVERED: {
@@ -73,6 +75,7 @@ export const STATUS_CONFIG: Record<
     labelVi: "Đã giao",
     color: "text-sky-400",
     bgColor: "bg-sky-500/20 border-sky-500/30",
+    dotColor: "bg-sky-400",
     emoji: "🔵",
   },
   OUT_OF_STOCK: {
@@ -80,6 +83,7 @@ export const STATUS_CONFIG: Record<
     labelVi: "Hết hàng",
     color: "text-rose-400",
     bgColor: "bg-rose-500/20 border-rose-500/30",
+    dotColor: "bg-rose-400",
     emoji: "🔴",
   },
 };

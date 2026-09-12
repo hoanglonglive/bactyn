@@ -42,8 +42,9 @@ export function StatusFilter({ counts, activeFilter, onFilterChange }: Props) {
           <button
             key={filter.key ?? "all"}
             onClick={() => onFilterChange(filter.key)}
+            aria-pressed={isActive}
             className={cn(
-              "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+              "min-h-11 flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
               isActive
                 ? filter.key
                   ? STATUS_CONFIG[filter.key].bgColor +
@@ -53,7 +54,12 @@ export function StatusFilter({ counts, activeFilter, onFilterChange }: Props) {
                 : "bg-surface-overlay border-border-subtle text-white/40 hover:text-white/60"
             )}
           >
-            {filter.emoji && <span className="text-[10px]">{filter.emoji}</span>}
+            {filter.key && (
+              <span
+                aria-hidden="true"
+                className={`w-2 h-2 rounded-full ${STATUS_CONFIG[filter.key].dotColor}`}
+              />
+            )}
             <span>{filter.label}</span>
             <span
               className={cn(
