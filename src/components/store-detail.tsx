@@ -165,10 +165,21 @@ export function StoreDetail({
     setActiveFilter(status);
   }, []);
 
-  const handleUploadComplete = useCallback(() => {
-    setShowUpload(false);
-    router.refresh();
-  }, [router]);
+  const handleUploadComplete = useCallback(
+    (newItems: OrderItem[]) => {
+      setShowUpload(false);
+      if (newItems && newItems.length > 0) {
+        setItems((prev) => [...newItems, ...prev]);
+        setCounts((prev) => ({
+          ...prev,
+          total: prev.total + newItems.length,
+          PENDING_ORDER: (prev.PENDING_ORDER || 0) + newItems.length,
+        }));
+      }
+      router.refresh();
+    },
+    [router]
+  );
 
   const handleStatusUpdate = useCallback(
     (photoId: string, newStatus: OrderStatus) => {
