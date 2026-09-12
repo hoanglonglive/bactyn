@@ -44,8 +44,11 @@ export function PhotoGrid({ items, onPhotoClick }: Props) {
                 <img
                   src={item.thumbnail_url}
                   alt={item.order_code || "Order photo"}
+                  width={300}
+                  height={400}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
-                  loading="lazy"
+                  loading={i < 6 ? "eager" : "lazy"}
+                  fetchPriority={i < 6 ? "high" : "auto"}
                   decoding="async"
                 />
               </div>

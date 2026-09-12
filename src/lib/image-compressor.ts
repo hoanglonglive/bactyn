@@ -14,7 +14,8 @@ export async function compressImage(file: File): Promise<CompressedResult> {
   const timestamp = Date.now();
   const baseName = file.name.replace(/\.[^/.]+$/, "");
 
-  // Compress full-size version
+  // Generate both independent variants concurrently. The library uses Web
+  // Workers, so this also keeps the UI thread free on phones.
   const fullOptions = {
     maxSizeMB: 0.195, // ~200KB
     maxWidthOrHeight: 1200,
@@ -23,14 +24,6 @@ export async function compressImage(file: File): Promise<CompressedResult> {
     initialQuality: 0.82,
   };
 
-  const fullBlob = await imageCompression(file, fullOptions);
-  const fullFile = new File(
-    [fullBlob],
-    `${baseName}_${timestamp}.webp`,
-    { type: "image/webp" }
-  );
-
-  // Compress thumbnail version
   const thumbOptions = {
     maxSizeMB: 0.028, // ~30KB
     maxWidthOrHeight: 300,
@@ -39,7 +32,15 @@ export async function compressImage(file: File): Promise<CompressedResult> {
     initialQuality: 0.6,
   };
 
-  const thumbBlob = await imageCompression(file, thumbOptions);
+  const [fullBlob, thumbBlob] = await Promise.all([
+    imageCompression(file, fullOptions),
+    imageCompression(file, thumbOptions),
+  ]);
+  const fullFile = new File(
+    [fullBlob],
+    `${baseName}_${timestamp}.webp`,
+    { type: "image/webp" }
+  );
   const thumbFile = new File(
     [thumbBlob],
     `${baseName}_${timestamp}_thumb.webp`,

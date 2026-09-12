@@ -93,6 +93,11 @@ CREATE INDEX IF NOT EXISTS idx_order_items_store_id ON public.order_items(store_
 CREATE INDEX IF NOT EXISTS idx_order_items_status ON public.order_items(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_store_status ON public.order_items(store_id, status);
 CREATE INDEX IF NOT EXISTS idx_order_items_created_at ON public.order_items(created_at DESC);
+-- Cover the two hot gallery queries without an extra sort.
+CREATE INDEX IF NOT EXISTS idx_order_items_store_created_at
+    ON public.order_items(store_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_order_items_store_status_created_at
+    ON public.order_items(store_id, status, created_at DESC);
 
 COMMENT ON TABLE public.order_items IS 'Order item photos belonging to a store album. Status tracks the order lifecycle.';
 

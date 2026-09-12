@@ -29,6 +29,7 @@ export async function createStore(formData: FormData) {
       .from("order-photos")
       .upload(filePath, coverFile, {
         contentType: coverFile.type,
+        cacheControl: "31536000",
         upsert: false,
       });
 

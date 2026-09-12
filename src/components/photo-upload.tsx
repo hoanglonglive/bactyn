@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { uploadOrderPhotos } from "@/app/actions/photo-actions";
 import { compressImage } from "@/lib/image-compressor";
+import { uploadOrderPhotosDirect } from "@/lib/upload-order-photos";
+import type { OrderItem } from "@/lib/types";
 import {
   X,
   Camera,
@@ -16,7 +17,7 @@ import {
 interface Props {
   storeId: string;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (items: OrderItem[]) => void;
 }
 
 interface FilePreview {
@@ -61,8 +62,7 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
     setFiles((prev) => [...prev, ...newFiles]);
 
     // Compress in parallel
-    for (let i = 0; i < fileArray.length; i++) {
-      const file = fileArray[i];
+    await Promise.all(fileArray.map(async (file, i) => {
       const id = newFiles[i].id;
 
       try {
@@ -87,7 +87,7 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
           )
         );
       }
-    }
+    }));
   }, []);
 
   function removeFile(id: string) {
@@ -105,39 +105,47 @@ export function PhotoUpload({ storeId, onClose, onComplete }: Props) {
     setUploading(true);
     setUploadProgress(`Đang chuẩn bị tải lên ${readyFiles.length} ảnh...`);
 
-    const formData = new FormData();
-    for (const f of readyFiles) {
-      if (f.fullFile && f.thumbFile) {
-        formData.append("files", f.fullFile);
-        formData.append("thumbnails", f.thumbFile);
-      }
-    }
-
     setFiles((prev) =>
       prev.map((f) =>
         f.status === "ready" ? { ...f, status: "uploading" as const } : f
       )
     );
 
-    const result = await uploadOrderPhotos(storeId, formData);
+    let uploadedCount = 0;
+    const result = await uploadOrderPhotosDirect(
+      storeId,
+      readyFiles.map((file) => ({
+        id: file.id,
+        originalName: file.originalName,
+        fullFile: file.fullFile!,
+        thumbFile: file.thumbFile!,
+      })),
+      () => {
+        uploadedCount++;
+        setUploadProgress(`${uploadedCount}/${readyFiles.length}`);
+      }
+    );
 
-    if (result.results) {
-      setFiles((prev) =>
-        prev.map((f) => {
-          if (f.status === "uploading") {
-            return { ...f, status: "done" as const };
-          }
-          return f;
-        })
-      );
-    }
+    const uploadedIds = new Set(result.uploadedIds);
+    const errors = new Map(result.errors.map((error) => [error.id, error.message]));
+    setFiles((prev) =>
+      prev.map((file) => {
+        if (errors.has(file.id)) {
+          return { ...file, status: "error" as const, error: errors.get(file.id) };
+        }
+        if (uploadedIds.has(file.id)) {
+          return { ...file, status: "done" as const };
+        }
+        return file;
+      })
+    );
 
     setUploadProgress("Tải lên hoàn tất!");
     setUploading(false);
 
-    setTimeout(() => {
-      onComplete();
-    }, 600);
+    if (result.items.length > 0) {
+      setTimeout(() => onComplete(result.items), result.errors.length ? 1200 : 400);
+    }
   }
 
   const readyCount = files.filter((f) => f.status === "ready").length;

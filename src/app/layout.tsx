@@ -7,6 +7,14 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const supabaseOrigin = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").origin;
+  } catch {
+    return undefined;
+  }
+})();
+
 export const metadata: Metadata = {
   title: "Bactyn Orders — Quản Lý Đơn Hàng",
   description:
@@ -35,6 +43,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${inter.variable} h-full`}>
       <head>
+        {supabaseOrigin && (
+          <>
+            <link rel="dns-prefetch" href={supabaseOrigin} />
+            <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+          </>
+        )}
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta

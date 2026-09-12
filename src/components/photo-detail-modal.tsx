@@ -53,7 +53,7 @@ export function PhotoDetailModal({
   onInfoUpdate,
   onNavigatePhoto,
 }: Props) {
-  const [currentPhoto, setCurrentPhoto] = useState(photo);
+  const currentPhoto = photo;
   const [currentStatus, setCurrentStatus] = useState(photo.status);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -68,22 +68,24 @@ export function PhotoDetailModal({
   const [color, setColor] = useState(photo.color || "");
   const [note, setNote] = useState(photo.note || "");
   const [saving, setSaving] = useState(false);
-
-  // Sync state when photo prop changes (navigating prev/next)
-  useEffect(() => {
-    setCurrentPhoto(photo);
-    setCurrentStatus(photo.status);
-    setOrderCode(photo.order_code || "");
-    setCustomerName(photo.customer_name || "");
-    setSize(photo.size || "");
-    setColor(photo.color || "");
-    setNote(photo.note || "");
-  }, [photo]);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Indexing for prev / next navigation
   const currentIndex = allPhotos.findIndex((p) => p.id === currentPhoto.id);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < allPhotos.length - 1;
+
+  // Warm the browser/CDN cache for adjacent photos while the user reads the
+  // current one. Navigation then usually paints without another visible wait.
+  useEffect(() => {
+    const adjacent = [allPhotos[currentIndex - 1], allPhotos[currentIndex + 1]];
+    for (const item of adjacent) {
+      if (item) {
+        const preload = new window.Image();
+        preload.src = item.image_url;
+      }
+    }
+  }, [allPhotos, currentIndex]);
 
   const handlePrev = useCallback(() => {
     if (hasPrev && onNavigatePhoto) {
@@ -226,16 +228,31 @@ export function PhotoDetailModal({
           )}
 
           <img
+            src={currentPhoto.thumbnail_url}
+            alt=""
+            aria-hidden="true"
+            className={`absolute inset-2 w-[calc(100%-1rem)] h-[calc(100%-1rem)] rounded-2xl object-contain blur-sm transition-opacity duration-150 ${
+              imageLoaded ? "opacity-0" : "opacity-100"
+            }`}
+          />
+          <img
+            key={currentPhoto.image_url}
             src={currentPhoto.image_url}
             alt={currentPhoto.order_code || "Order photo"}
-            className="w-full h-full rounded-2xl object-contain shadow-2xl transition-transform duration-200"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            onLoad={() => setImageLoaded(true)}
+            className={`relative w-full h-full rounded-2xl object-contain shadow-2xl transition-opacity duration-150 ${
+              imageLoaded ? "opacity-100" : "opacity-0"
+            }`}
           />
 
           <a
             href={currentPhoto.image_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute bottom-4 right-4 p-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 text-white/70 hover:text-white transition-all active:scale-95"
+            className="absolute z-10 bottom-4 right-4 p-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 text-white/70 hover:text-white transition-all active:scale-95"
             title="Xem ảnh gốc"
           >
             <Maximize2 className="w-4 h-4" />

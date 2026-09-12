@@ -1,7 +1,6 @@
 import { getStore } from "@/app/actions/store-actions";
 import {
   getStoreItems,
-  getStatusCounts,
   getUserProfile,
   getAllStoresSimple,
 } from "@/app/actions/photo-actions";
@@ -16,11 +15,10 @@ export default async function StoreDetailPage({
 }) {
   const { id } = await params;
 
-  const [storeResult, itemsResult, countsResult, profileResult, allStores] =
+  const [storeResult, itemsResult, profileResult, allStores] =
     await Promise.all([
       getStore(id),
       getStoreItems(id),
-      getStatusCounts(id),
       getUserProfile(),
       getAllStoresSimple(),
     ]);
@@ -31,13 +29,17 @@ export default async function StoreDetailPage({
 
   const store = storeResult.data as Store;
   const items = (itemsResult.data || []) as OrderItem[];
-  const counts = countsResult.data || {
+  const counts = {
     total: 0,
     PURCHASED: 0,
     PENDING_ORDER: 0,
     DELIVERED: 0,
     OUT_OF_STOCK: 0,
   };
+  for (const item of items) {
+    counts.total++;
+    counts[item.status]++;
+  }
   const profile = profileResult.data as Profile | null;
   const otherStores = allStores.filter((s) => s.id !== id);
 

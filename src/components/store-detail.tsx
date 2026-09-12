@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera, ShieldCheck, Search, X } from "lucide-react";
 import Link from "next/link";
 import type { Store, OrderItem, OrderStatus, Profile } from "@/lib/types";
@@ -33,7 +32,6 @@ export function StoreDetail({
   profile,
   otherStores,
 }: Props) {
-  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [counts, setCounts] = useState(initialCounts);
   const [activeFilter, setActiveFilter] = useState<OrderStatus | null>(null);
@@ -66,10 +64,15 @@ export function StoreDetail({
     setActiveFilter(status);
   }, []);
 
-  const handleUploadComplete = useCallback(() => {
+  const handleUploadComplete = useCallback((newItems: OrderItem[]) => {
+    setItems((prev) => [...newItems, ...prev]);
+    setCounts((prev) => ({
+      ...prev,
+      total: prev.total + newItems.length,
+      PENDING_ORDER: prev.PENDING_ORDER + newItems.length,
+    }));
     setShowUpload(false);
-    router.refresh();
-  }, [router]);
+  }, []);
 
   const handleStatusUpdate = useCallback(
     (photoId: string, newStatus: OrderStatus) => {
@@ -219,6 +222,7 @@ export function StoreDetail({
       {/* Photo Detail Lightbox Modal with Full Prev/Next & Quick Navigation */}
       {selectedPhoto && (
         <PhotoDetailModal
+          key={selectedPhoto.id}
           photo={selectedPhoto}
           allPhotos={filteredItems}
           isAdmin={isAdmin}

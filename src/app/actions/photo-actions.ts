@@ -4,92 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { OrderStatus } from "@/lib/types";
 
-export async function uploadOrderPhotos(
-  storeId: string,
-  formData: FormData
-) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Unauthorized" };
-  }
-
-  const files = formData.getAll("files") as File[];
-  const thumbnails = formData.getAll("thumbnails") as File[];
-
-  if (files.length === 0) {
-    return { error: "No files to upload" };
-  }
-
-  const results = [];
-
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    const thumb = thumbnails[i];
-    const timestamp = Date.now();
-    const baseName = file.name.replace(/\.[^/.]+$/, "");
-
-    // Upload full-size image
-    const fullPath = `orders/${storeId}/${timestamp}_${baseName}.webp`;
-    const { error: fullError } = await supabase.storage
-      .from("order-photos")
-      .upload(fullPath, file, {
-        contentType: "image/webp",
-        upsert: false,
-      });
-
-    if (fullError) {
-      results.push({ error: `Failed to upload ${file.name}: ${fullError.message}` });
-      continue;
-    }
-
-    // Upload thumbnail
-    const thumbPath = `orders/${storeId}/${timestamp}_${baseName}_thumb.webp`;
-    const { error: thumbError } = await supabase.storage
-      .from("order-photos")
-      .upload(thumbPath, thumb, {
-        contentType: "image/webp",
-        upsert: false,
-      });
-
-    if (thumbError) {
-      results.push({ error: `Failed to upload thumbnail for ${file.name}: ${thumbError.message}` });
-      continue;
-    }
-
-    const { data: { publicUrl: imageUrl } } = supabase.storage
-      .from("order-photos")
-      .getPublicUrl(fullPath);
-
-    const { data: { publicUrl: thumbnailUrl } } = supabase.storage
-      .from("order-photos")
-      .getPublicUrl(thumbPath);
-
-    // Insert DB record
-    const { error: dbError } = await supabase
-      .from("order_items")
-      .insert({
-        store_id: storeId,
-        image_url: imageUrl,
-        thumbnail_url: thumbnailUrl,
-        status: "PENDING_ORDER" as OrderStatus,
-        created_by: user.id,
-      });
-
-    if (dbError) {
-      results.push({ error: `DB error for ${file.name}: ${dbError.message}` });
-    } else {
-      results.push({ success: true, name: file.name });
-    }
-  }
-
-  revalidatePath(`/stores/${storeId}`);
-  return { results };
-}
-
 export async function updatePhotoStatus(
   photoId: string,
   newStatus: OrderStatus
@@ -236,7 +150,7 @@ export async function getStoreItems(
 
   let query = supabase
     .from("order_items")
-    .select("*")
+    .select("id, store_id, image_url, thumbnail_url, status, order_code, customer_name, size, color, note, created_at, updated_at, created_by")
     .eq("store_id", storeId)
     .order("created_at", { ascending: false });
 
