@@ -17,12 +17,18 @@ import {
   Trash2,
   X,
   Users,
+  CheckSquare,
+  Square,
+  Check,
+  Loader2,
 } from "lucide-react";
 import type { StoreWithCounts, Profile } from "@/lib/types";
 import { CreateStoreDialog } from "./create-store-dialog";
 import { DeleteStoreDialog } from "./delete-store-dialog";
 import { AdminUserModal } from "./admin-user-modal";
 import { signOut } from "@/app/actions/auth-actions";
+import { bulkDeleteStores } from "@/app/actions/store-actions";
+import { useRouter } from "next/navigation";
 
 interface StoreListProps {
   stores: StoreWithCounts[];
@@ -30,13 +36,52 @@ interface StoreListProps {
 }
 
 export function StoreList({ stores, profile }: StoreListProps) {
+  const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StoreWithCounts | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
+  // Bulk Selection States
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
   const isAdmin = profile?.role === "admin";
+
+  const toggleSelectStore = (storeId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(storeId)) {
+        next.delete(storeId);
+      } else {
+        next.add(storeId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredStores.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredStores.map((s) => s.id)));
+    }
+  };
+
+  const handleBulkDeleteStores = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    await bulkDeleteStores(ids);
+    setBulkDeleting(false);
+    setShowBulkDeleteConfirm(false);
+    setSelectedIds(new Set());
+    setSelectMode(false);
+    router.refresh();
+  };
 
   // Filter stores by search query
   const filteredStores = useMemo(() => {
@@ -193,6 +238,25 @@ export function StoreList({ stores, profile }: StoreListProps) {
               <List className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Select Mode Toggle (Admin) */}
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setSelectMode(!selectMode);
+                if (selectMode) setSelectedIds(new Set());
+              }}
+              className={`px-3 py-2 rounded-2xl border text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
+                selectMode
+                  ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30"
+                  : "bg-surface-elevated text-white/70 border-border-subtle hover:text-white"
+              }`}
+              title="Bật/Tắt chế độ chọn hàng loạt"
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">{selectMode ? "Hủy chọn" : "Chọn nhiều"}</span>
+            </button>
+          )}
         </div>
 
         {/* Store Grid / List View */}
@@ -234,6 +298,9 @@ export function StoreList({ stores, profile }: StoreListProps) {
                 index={i}
                 viewMode={viewMode}
                 isAdmin={isAdmin}
+                selectMode={selectMode}
+                isSelected={selectedIds.has(store.id)}
+                onToggleSelect={() => toggleSelectStore(store.id)}
                 onDelete={() => setDeleteTarget(store)}
               />
             ))}
@@ -268,6 +335,74 @@ export function StoreList({ stores, profile }: StoreListProps) {
           currentUserId={profile?.id}
         />
       )}
+
+      {/* Floating Bottom Bulk Action Bar for Stores */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass border border-white/20 rounded-2xl px-5 py-3 shadow-2xl flex items-center gap-4 animate-fade-in max-w-md w-[92%] justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-md">
+              {selectedIds.size}
+            </span>
+            <span className="text-xs font-bold text-white">Gian hàng đã chọn</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSelectAll}
+              className="text-[11px] font-semibold text-white/70 hover:text-white px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/10"
+            >
+              {selectedIds.size === filteredStores.length ? "Bỏ chọn" : "Tất cả"}
+            </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 flex items-center gap-1.5 transition-all active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Xóa hàng loạt</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Store Confirmation Modal */}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowBulkDeleteConfirm(false)}
+          />
+          <div className="relative w-full max-w-sm rounded-3xl bg-surface-elevated border border-border-subtle p-6 text-center shadow-2xl animate-fade-in">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center mb-3 border border-rose-500/30">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-extrabold text-white mb-1">
+              Xóa {selectedIds.size} gian hàng đã chọn?
+            </h3>
+            <p className="text-xs text-white/50 mb-5">
+              Hành động này sẽ xóa vĩnh viễn các gian hàng này và tất cả các ảnh đơn hàng bên trong. Thao tác không thể hoàn tác!
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                className="flex-1 rounded-2xl border border-border-subtle py-2.5 text-xs font-semibold text-white/70 hover:text-white transition-all active:scale-95"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleBulkDeleteStores}
+                disabled={bulkDeleting}
+                className="flex-1 rounded-2xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
+              >
+                {bulkDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                Xóa tất cả
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -277,12 +412,18 @@ function StoreCard({
   index,
   viewMode,
   isAdmin,
+  selectMode,
+  isSelected,
+  onToggleSelect,
   onDelete,
 }: {
   store: StoreWithCounts;
   index: number;
   viewMode: "grid" | "list";
   isAdmin: boolean;
+  selectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
   onDelete: () => void;
 }) {
   const storeInitials = store.name.substring(0, 2).toUpperCase();
@@ -293,10 +434,60 @@ function StoreCard({
         className="animate-fade-in relative group"
         style={{ animationDelay: `${Math.min(index * 30, 200)}ms` }}
       >
-        <Link
-          href={`/stores/${store.id}`}
-          className="flex items-center gap-3.5 p-3 rounded-2xl bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated/80 transition-all active:scale-[0.99] shadow-md hover:shadow-xl"
-        >
+        {selectMode ? (
+          <div
+            onClick={onToggleSelect}
+            className={`flex items-center gap-3.5 p-3 rounded-2xl bg-surface-elevated border transition-all cursor-pointer shadow-md ${
+              isSelected
+                ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/50"
+                : "border-border-subtle hover:border-white/20"
+            }`}
+          >
+            {/* Checkbox Icon */}
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+              isSelected ? "bg-indigo-600 text-white shadow-md" : "border-2 border-white/30 bg-black/40"
+            }`}>
+              {isSelected && <Check className="w-4 h-4" />}
+            </div>
+
+            {/* Cover Thumbnail */}
+            <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-surface-overlay flex-shrink-0 border border-white/10">
+              {store.cover_url ? (
+                <img
+                  src={store.cover_url}
+                  alt={store.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-indigo-900/60 to-purple-900/60 flex items-center justify-center font-black text-indigo-200 text-sm">
+                  {storeInitials}
+                </div>
+              )}
+            </div>
+
+            {/* Details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-bold text-white truncate">
+                  {store.name}
+                </h3>
+                <span className="text-[10px] font-bold text-white/60 bg-white/10 px-2 py-0.5 rounded-full border border-white/10 flex-shrink-0">
+                  {store.total_items} ảnh
+                </span>
+              </div>
+              {store.note && (
+                <p className="text-[11px] text-white/40 truncate mt-0.5">
+                  {store.note}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <Link
+            href={`/stores/${store.id}`}
+            className="flex items-center gap-3.5 p-3 rounded-2xl bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated/80 transition-all active:scale-[0.99] shadow-md hover:shadow-xl"
+          >
           {/* Cover Thumbnail */}
           <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-surface-overlay flex-shrink-0 border border-white/10">
             {store.cover_url ? (
@@ -365,6 +556,7 @@ function StoreCard({
             </div>
           </div>
         </Link>
+        )}
 
         {/* Admin Delete Button */}
         {isAdmin && (
@@ -390,10 +582,64 @@ function StoreCard({
       className="animate-fade-in relative group"
       style={{ animationDelay: `${Math.min(index * 30, 200)}ms` }}
     >
-      <Link
-        href={`/stores/${store.id}`}
-        className="block rounded-3xl overflow-hidden bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-2xl hover:-translate-y-1"
-      >
+      {selectMode ? (
+        <div
+          onClick={onToggleSelect}
+          className={`block rounded-3xl overflow-hidden bg-surface-elevated border transition-all duration-200 cursor-pointer shadow-md ${
+            isSelected
+              ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/50"
+              : "border-border-subtle hover:border-white/20"
+          }`}
+        >
+          {/* Cover Aspect Box */}
+          <div className="relative aspect-[4/3] bg-surface-overlay overflow-hidden">
+            {store.cover_url ? (
+              <img
+                src={store.cover_url}
+                alt={store.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-indigo-900/60 via-purple-950/60 to-slate-900 flex flex-col items-center justify-center p-2 text-center">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-black text-indigo-300 text-base shadow-inner border border-white/15 mb-1">
+                  {storeInitials}
+                </div>
+                <span className="text-[9px] font-semibold text-white/30">Chưa có ảnh bìa</span>
+              </div>
+            )}
+
+            {/* Checkbox Badge Overlay */}
+            <div className={`absolute top-2.5 left-2.5 w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+              isSelected ? "bg-indigo-600 text-white shadow-lg" : "border-2 border-white/40 bg-black/50"
+            }`}>
+              {isSelected && <Check className="w-4 h-4" />}
+            </div>
+
+            {/* Photo Count Badge */}
+            <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg">
+              <ImageIcon className="w-3 h-3 text-indigo-400" />
+              <span>{store.total_items}</span>
+            </div>
+          </div>
+
+          {/* Store Title & Badges */}
+          <div className="p-3.5">
+            <h3 className="text-sm font-bold text-white truncate">
+              {store.name}
+            </h3>
+            {store.note && (
+              <p className="text-[10px] text-white/40 truncate mt-0.5">
+                {store.note}
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <Link
+          href={`/stores/${store.id}`}
+          className="block rounded-3xl overflow-hidden bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-2xl hover:-translate-y-1"
+        >
         {/* Cover Aspect Box */}
         <div className="relative aspect-[4/3] bg-surface-overlay overflow-hidden">
           {store.cover_url ? (
@@ -472,6 +718,7 @@ function StoreCard({
           )}
         </div>
       </Link>
+      )}
 
       {/* Admin Delete Button */}
       {isAdmin && (

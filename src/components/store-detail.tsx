@@ -2,13 +2,34 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, ShieldCheck, Search, X, LayoutGrid, List, Download } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  ShieldCheck,
+  Search,
+  X,
+  LayoutGrid,
+  List,
+  Download,
+  CheckSquare,
+  Trash2,
+  ArrowRightLeft,
+  Tag,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import Link from "next/link";
 import type { Store, OrderItem, OrderStatus, Profile } from "@/lib/types";
+import { STATUS_CONFIG } from "@/lib/types";
 import { StatusFilter } from "./status-filter";
 import { PhotoGrid } from "./photo-grid";
 import { PhotoUpload } from "./photo-upload";
 import { PhotoDetailModal } from "./photo-detail-modal";
+import {
+  bulkDeleteOrderPhotos,
+  bulkUpdatePhotoStatus,
+  bulkMovePhotosToStore,
+} from "@/app/actions/photo-actions";
 
 interface StatusCounts {
   total: number;
@@ -64,6 +85,81 @@ export function StoreDetail({
       return true;
     });
   }, [items, activeFilter, searchQuery]);
+
+  // Bulk Selection States
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkStatusMenu, setShowBulkStatusMenu] = useState(false);
+  const [showBulkMoveModal, setShowBulkMoveModal] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+
+  const toggleSelectPhoto = useCallback((item: OrderItem) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(item.id)) {
+        next.delete(item.id);
+      } else {
+        next.add(item.id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedIds.size === filteredItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map((i) => i.id)));
+    }
+  }, [selectedIds.size, filteredItems]);
+
+  const handleBulkStatusChange = async (newStatus: OrderStatus) => {
+    if (selectedIds.size === 0) return;
+    setBulkProcessing(true);
+    const ids = Array.from(selectedIds);
+    const result = await bulkUpdatePhotoStatus(ids, newStatus);
+    if (!result.error) {
+      setItems((prev) =>
+        prev.map((i) => (selectedIds.has(i.id) ? { ...i, status: newStatus } : i))
+      );
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      setShowBulkStatusMenu(false);
+      router.refresh();
+    }
+    setBulkProcessing(false);
+  };
+
+  const handleBulkMove = async (targetStoreId: string) => {
+    if (selectedIds.size === 0) return;
+    setBulkProcessing(true);
+    const ids = Array.from(selectedIds);
+    const result = await bulkMovePhotosToStore(ids, targetStoreId);
+    if (!result.error) {
+      setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      setShowBulkMoveModal(false);
+      router.refresh();
+    }
+    setBulkProcessing(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkProcessing(true);
+    const ids = Array.from(selectedIds);
+    const result = await bulkDeleteOrderPhotos(ids);
+    if (!result.error) {
+      setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      setShowBulkDeleteModal(false);
+      router.refresh();
+    }
+    setBulkProcessing(false);
+  };
 
   const handleFilterChange = useCallback((status: OrderStatus | null) => {
     setActiveFilter(status);
@@ -255,6 +351,23 @@ export function StoreDetail({
               <List className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* Select Mode Toggle */}
+          <button
+            onClick={() => {
+              setSelectMode(!selectMode);
+              if (selectMode) setSelectedIds(new Set());
+            }}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0 ${
+              selectMode
+                ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30"
+                : "bg-surface-elevated text-white/70 border-border-subtle hover:text-white"
+            }`}
+            title="Bật/Tắt chọn nhiều ảnh đơn hàng"
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{selectMode ? "Hủy chọn" : "Chọn nhiều"}</span>
+          </button>
         </div>
 
         {/* Status Filter Chips */}
@@ -270,6 +383,9 @@ export function StoreDetail({
         <PhotoGrid
           items={filteredItems}
           viewMode={viewMode}
+          selectMode={selectMode}
+          selectedIds={selectedIds}
+          onToggleSelectPhoto={toggleSelectPhoto}
           onPhotoClick={setSelectedPhoto}
         />
       </main>
@@ -309,6 +425,164 @@ export function StoreDetail({
           onInfoUpdate={handleInfoUpdate}
           onNavigatePhoto={setSelectedPhoto}
         />
+      )}
+
+      {/* Floating Bottom Bulk Action Bar for Order Photos */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass border border-white/20 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3 animate-fade-in max-w-xl w-[94%] justify-between">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-md">
+              {selectedIds.size}
+            </span>
+            <span className="text-xs font-bold text-white hidden xs:inline">Đã chọn</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            <button
+              onClick={handleSelectAll}
+              className="text-[11px] font-semibold text-white/70 hover:text-white px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all border border-white/10"
+            >
+              {selectedIds.size === filteredItems.length ? "Bỏ chọn" : "Tất cả"}
+            </button>
+
+            {/* Bulk Status Update Menu Button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowBulkStatusMenu(!showBulkStatusMenu)}
+                className="px-2.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-semibold flex items-center gap-1 border border-indigo-500/30 transition-all active:scale-95 shadow-sm"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                <span>Trạng thái</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+
+              {/* Status Selector Popover */}
+              {showBulkStatusMenu && (
+                <div className="absolute bottom-full mb-2 right-0 w-48 rounded-2xl bg-surface-elevated border border-border-subtle p-1.5 shadow-2xl z-60 animate-fade-in space-y-1">
+                  <p className="text-[10px] font-bold text-white/40 px-2 py-1 uppercase tracking-wider">
+                    Đổi trạng thái ({selectedIds.size} ảnh)
+                  </p>
+                  {(isAdmin
+                    ? (["PURCHASED", "PARTIALLY_PURCHASED", "PENDING_ORDER", "DELIVERED", "IN_STOCK", "OUT_OF_STOCK"] as OrderStatus[])
+                    : (["DELIVERED", "IN_STOCK", "PARTIALLY_PURCHASED"] as OrderStatus[])
+                  ).map((st) => {
+                    const cfg = STATUS_CONFIG[st];
+                    return (
+                      <button
+                        key={st}
+                        onClick={() => handleBulkStatusChange(st)}
+                        disabled={bulkProcessing}
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-white/10 text-left text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                      >
+                        <span className={`w-2 h-2 rounded-full ${cfg.dotColor}`} />
+                        <span>{cfg.labelVi}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Admin Bulk Move Button */}
+            {isAdmin && otherStores.length > 0 && (
+              <button
+                onClick={() => setShowBulkMoveModal(true)}
+                className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 text-xs font-semibold flex items-center gap-1 border border-white/15 transition-all active:scale-95 shadow-sm"
+              >
+                <ArrowRightLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Chuyển</span>
+              </button>
+            )}
+
+            {/* Admin Bulk Delete Button */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowBulkDeleteModal(true)}
+                className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 flex items-center gap-1 transition-all active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Xóa</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Move Modal */}
+      {showBulkMoveModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowBulkMoveModal(false)}
+          />
+          <div className="relative w-full max-w-sm rounded-3xl bg-surface-elevated border border-border-subtle p-5 shadow-2xl animate-fade-in">
+            <h3 className="text-base font-extrabold text-white mb-1 flex items-center gap-2">
+              <ArrowRightLeft className="w-5 h-5 text-indigo-400" />
+              Chuyển {selectedIds.size} ảnh đơn hàng
+            </h3>
+            <p className="text-xs text-white/50 mb-4">
+              Chọn gian hàng bạn muốn chuyển các ảnh đơn đã chọn sang:
+            </p>
+            <div className="space-y-1.5 max-h-60 overflow-y-auto mb-4 pr-1">
+              {otherStores.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => handleBulkMove(s.id)}
+                  disabled={bulkProcessing}
+                  className="w-full p-3 rounded-2xl bg-surface/70 border border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated text-left text-xs font-bold text-white transition-all flex items-center justify-between group disabled:opacity-50"
+                >
+                  <span>{s.name}</span>
+                  <span className="text-[10px] font-semibold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Chuyển sang &rarr;
+                  </span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowBulkMoveModal(false)}
+              className="w-full py-2.5 rounded-2xl border border-border-subtle text-xs font-semibold text-white/70 hover:text-white transition-all"
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Order Photos Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowBulkDeleteModal(false)}
+          />
+          <div className="relative w-full max-w-sm rounded-3xl bg-surface-elevated border border-border-subtle p-6 text-center shadow-2xl animate-fade-in">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center mb-3 border border-rose-500/30">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-extrabold text-white mb-1">
+              Xóa {selectedIds.size} ảnh đơn hàng?
+            </h3>
+            <p className="text-xs text-white/50 mb-5">
+              Hành động này sẽ xóa vĩnh viễn các ảnh đơn hàng đã chọn khỏi hệ thống và giải phóng bộ nhớ. Thao tác không thể hoàn tác!
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="flex-1 rounded-2xl border border-border-subtle py-2.5 text-xs font-semibold text-white/70 hover:text-white transition-all active:scale-95"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkProcessing}
+                className="flex-1 rounded-2xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-rose-600/30"
+              >
+                {bulkProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
+                Xóa tất cả
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -208,6 +208,157 @@ export async function deleteOrderPhoto(photoId: string) {
   return { success: true };
 }
 
+export async function bulkDeleteOrderPhotos(photoIds: string[]) {
+  if (!photoIds || photoIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  // Check admin role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return { error: "Only admins can delete photos" };
+  }
+
+  // Get photo info for storage cleanup
+  const { data: photos } = await supabase
+    .from("order_items")
+    .select("image_url, thumbnail_url, store_id")
+    .in("id", photoIds);
+
+  if (photos && photos.length > 0) {
+    const filePaths: string[] = [];
+    const affectedStoreIds = new Set<string>();
+
+    for (const p of photos) {
+      if (p.store_id) affectedStoreIds.add(p.store_id);
+      const imgPath = extractStoragePath(p.image_url);
+      const thumbPath = extractStoragePath(p.thumbnail_url);
+      if (imgPath) filePaths.push(imgPath);
+      if (thumbPath && thumbPath !== imgPath) filePaths.push(thumbPath);
+    }
+
+    if (filePaths.length > 0) {
+      await supabase.storage.from("order-photos").remove(filePaths);
+    }
+
+    // Delete from DB
+    const { error } = await supabase
+      .from("order_items")
+      .delete()
+      .in("id", photoIds);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    affectedStoreIds.forEach((sId) => revalidatePath(`/stores/${sId}`));
+  }
+
+  return { success: true, count: photoIds.length };
+}
+
+export async function bulkUpdatePhotoStatus(
+  photoIds: string[],
+  newStatus: OrderStatus
+) {
+  if (!photoIds || photoIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  const STAFF_ALLOWED_STATUSES: OrderStatus[] = [
+    "DELIVERED",
+    "IN_STOCK",
+    "PARTIALLY_PURCHASED",
+  ];
+
+  // Check staff role permissions
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin" && !STAFF_ALLOWED_STATUSES.includes(newStatus)) {
+    return { error: "Bạn không có quyền chuyển sang trạng thái này" };
+  }
+
+  const { error } = await supabase
+    .from("order_items")
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .in("id", photoIds);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/stores");
+  return { success: true, count: photoIds.length };
+}
+
+export async function bulkMovePhotosToStore(
+  photoIds: string[],
+  targetStoreId: string
+) {
+  if (!photoIds || photoIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return { error: "Only admins can move photos" };
+  }
+
+  const { error } = await supabase
+    .from("order_items")
+    .update({ store_id: targetStoreId })
+    .in("id", photoIds);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/stores");
+  revalidatePath(`/stores/${targetStoreId}`);
+  return { success: true, count: photoIds.length };
+}
+
 export async function getStoreItems(
   storeId: string,
   statusFilter?: OrderStatus | null

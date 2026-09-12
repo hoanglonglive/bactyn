@@ -129,6 +129,78 @@ export async function deleteStore(storeId: string) {
   return { success: true };
 }
 
+export async function bulkDeleteStores(storeIds: string[]) {
+  if (!storeIds || storeIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  // Check admin role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return { error: "Only admins can delete stores" };
+  }
+
+  // 1. Collect all order photo file paths for cleanup
+  const { data: items } = await supabase
+    .from("order_items")
+    .select("image_url, thumbnail_url")
+    .in("store_id", storeIds);
+
+  // 2. Get store covers
+  const { data: stores } = await supabase
+    .from("stores")
+    .select("cover_url")
+    .in("id", storeIds);
+
+  // 3. Delete files from storage
+  const filePaths: string[] = [];
+  if (items && items.length > 0) {
+    for (const item of items) {
+      const imgPath = extractStoragePath(item.image_url);
+      const thumbPath = extractStoragePath(item.thumbnail_url);
+      if (imgPath) filePaths.push(imgPath);
+      if (thumbPath && thumbPath !== imgPath) filePaths.push(thumbPath);
+    }
+  }
+
+  if (stores && stores.length > 0) {
+    for (const s of stores) {
+      if (s.cover_url) {
+        const coverPath = extractStoragePath(s.cover_url);
+        if (coverPath) filePaths.push(coverPath);
+      }
+    }
+  }
+
+  if (filePaths.length > 0) {
+    await supabase.storage.from("order-photos").remove(filePaths);
+  }
+
+  // 4. Delete stores
+  const { error } = await supabase.from("stores").delete().in("id", storeIds);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/stores");
+  return { success: true, count: storeIds.length };
+}
+
 export async function getStores() {
   const supabase = await createClient();
   const { data, error } = await supabase

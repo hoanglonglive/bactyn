@@ -1,16 +1,26 @@
 "use client";
 
-import { ImageIcon, FileText } from "lucide-react";
+import { ImageIcon, FileText, Check } from "lucide-react";
 import type { OrderItem } from "@/lib/types";
 import { STATUS_CONFIG } from "@/lib/types";
 
 interface Props {
   items: OrderItem[];
   viewMode?: "grid" | "list";
+  selectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelectPhoto?: (item: OrderItem) => void;
   onPhotoClick: (item: OrderItem) => void;
 }
 
-export function PhotoGrid({ items, viewMode = "grid", onPhotoClick }: Props) {
+export function PhotoGrid({
+  items,
+  viewMode = "grid",
+  selectMode = false,
+  selectedIds = new Set(),
+  onToggleSelectPhoto,
+  onPhotoClick,
+}: Props) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-3xl border border-dashed border-white/10 bg-surface-elevated/40">
@@ -31,6 +41,7 @@ export function PhotoGrid({ items, viewMode = "grid", onPhotoClick }: Props) {
         {items.map((item, i) => {
           const statusConfig = STATUS_CONFIG[item.status];
           const displayImg = item.thumbnail_url || item.image_url;
+          const isSelected = selectedIds.has(item.id);
 
           return (
             <div
@@ -39,9 +50,30 @@ export function PhotoGrid({ items, viewMode = "grid", onPhotoClick }: Props) {
               style={{ animationDelay: `${Math.min(i * 15, 150)}ms` }}
             >
               <button
-                onClick={() => onPhotoClick(item)}
-                className="w-full flex items-center gap-3 p-2.5 rounded-2xl bg-surface-elevated border border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated/80 transition-all text-left active:scale-[0.99] shadow-md group"
+                onClick={() =>
+                  selectMode && onToggleSelectPhoto
+                    ? onToggleSelectPhoto(item)
+                    : onPhotoClick(item)
+                }
+                className={`w-full flex items-center gap-3 p-2.5 rounded-2xl bg-surface-elevated border text-left transition-all active:scale-[0.99] shadow-md group ${
+                  isSelected
+                    ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/50"
+                    : "border-border-subtle hover:border-indigo-500/50 hover:bg-surface-elevated/80"
+                }`}
               >
+                {/* Checkbox Icon when selectMode */}
+                {selectMode && (
+                  <div
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+                      isSelected
+                        ? "bg-indigo-600 text-white shadow-md"
+                        : "border-2 border-white/30 bg-black/40"
+                    }`}
+                  >
+                    {isSelected && <Check className="w-4 h-4" />}
+                  </div>
+                )}
+
                 {/* Thumbnail */}
                 <div className="relative w-16 h-20 rounded-xl overflow-hidden bg-black/40 border border-white/10 flex-shrink-0">
                   <img
@@ -99,12 +131,13 @@ export function PhotoGrid({ items, viewMode = "grid", onPhotoClick }: Props) {
     );
   }
 
-  // Grid Layout Mode (Fast, Non-clipping CSS Grid)
+  // Grid Layout Mode
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
       {items.map((item, i) => {
         const statusConfig = STATUS_CONFIG[item.status];
         const displayImg = item.thumbnail_url || item.image_url;
+        const isSelected = selectedIds.has(item.id);
 
         return (
           <div
@@ -113,11 +146,19 @@ export function PhotoGrid({ items, viewMode = "grid", onPhotoClick }: Props) {
             style={{ animationDelay: `${Math.min(i * 15, 150)}ms` }}
           >
             <button
-              onClick={() => onPhotoClick(item)}
+              onClick={() =>
+                selectMode && onToggleSelectPhoto
+                  ? onToggleSelectPhoto(item)
+                  : onPhotoClick(item)
+              }
               aria-label={`Mở ảnh ${item.order_code || "đơn hàng"}`}
-              className="group relative w-full cursor-pointer rounded-2xl overflow-hidden bg-surface-elevated border border-white/10 hover:border-indigo-500/50 block text-left transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-xl hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/80"
+              className={`group relative w-full cursor-pointer rounded-2xl overflow-hidden bg-surface-elevated border block text-left transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/80 ${
+                isSelected
+                  ? "border-indigo-500 ring-2 ring-indigo-500/60 shadow-indigo-500/20"
+                  : "border-white/10 hover:border-indigo-500/50"
+              }`}
             >
-              {/* Photo Image Aspect Container (Optimized 9:16 for Screenshots) */}
+              {/* Photo Image Aspect Container */}
               <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/40">
                 <img
                   src={displayImg}
@@ -126,6 +167,19 @@ export function PhotoGrid({ items, viewMode = "grid", onPhotoClick }: Props) {
                   loading={i < 8 ? "eager" : "lazy"}
                   decoding="async"
                 />
+
+                {/* Checkbox Overlay in Select Mode */}
+                {selectMode && (
+                  <div
+                    className={`absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center transition-all z-10 ${
+                      isSelected
+                        ? "bg-indigo-600 text-white shadow-lg scale-105"
+                        : "border-2 border-white/40 bg-black/50"
+                    }`}
+                  >
+                    {isSelected && <Check className="w-4 h-4" />}
+                  </div>
+                )}
               </div>
 
               {/* Status Badge Tag */}
